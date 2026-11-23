@@ -1,0 +1,24 @@
+{
+  "name": "pm-knowledge-graph-reader",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A reorganised, searchable reader for The Product Management Knowledge Graph (Chandrashekhar V, CC BY-NC-SA 4.0).",
+  "license": "CC-BY-NC-SA-4.0",
+  "scripts": {
+    "build": "node scripts/build.mjs && pagefind --site dist --output-subdir pagefind --quiet",
+    "build:fast": "node scripts/build.mjs",
+    "sync": "node scripts/sync.mjs",
+    "fetch-source": "node scripts/fetch-source.mjs",
+    "verify": "node scripts/verify.mjs",
+    "serve": "npx --yes serve dist -l 4321"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "dagre": "^0.8.5",
+    "postcss": "^8.4.47",
+    "pagefind": "^1.1.1",
+    "adm-zip": "^0.5.16"
+  },
+  "engines": { "node": ">=18" }
+}

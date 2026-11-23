@@ -1,0 +1,7 @@
+# Netlify: connect the Git repo (build runs here) or drag the dist/ folder onto app.netlify.com/drop.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

@@ -1,0 +1,13 @@
+[
+  {
+    "date": "2026-11-23",
+    "title": "Baseline: Version 20 (26 October 2026)",
+    "version": {
+      "number": 20,
+      "updated": "26 October 2026"
+    },
+    "contentHash": "a782ce7561bb1364",
+    "summary": "First build of the reader from the source artifact: 1046 topics, 49 modules, 1715 reading pages in 180 bundle files.",
+    "sections": []
+  }
+]

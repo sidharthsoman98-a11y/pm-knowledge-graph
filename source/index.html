@@ -1,0 +1,496 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Product Management Knowledge Graph (Copy)</title>
+<meta name="description" content="A prerequisite map of product management — 1,046 topics across 11 domains, with explainers and Indian-context teaching cases at two depths each.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F5F6F3; --sheet:#FFFFFF; --ink:#1B222B; --ink-2:#4A5461; --ink-3:#7C8590;
+  --rule:#D8DCD7; --rule-2:#E9ECE8; --s:#2F8C6A; --r:#4A5BB8; --art:#B7862A;
+  --shadow:0 8px 28px rgba(20,30,40,.10);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#12171C; --sheet:#1A2128; --ink:#E6E9EC; --ink-2:#B4BCC5; --ink-3:#7F8993;
+  --rule:#2C353E; --rule-2:#232B33; --s:#5FBF98; --r:#8A98E8; --art:#D9A84A;
+  --shadow:0 8px 28px rgba(0,0,0,.5);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+  font-size:16.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding-block:0 72px;padding-left:22px;padding-right:22px}
+header.top{padding-block:64px 40px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:clamp(30px,5.2vw,48px);
+  line-height:1.08;font-weight:700;margin:0 0 16px;letter-spacing:-.015em;text-wrap:balance}
+.stand{font-size:clamp(17px,2.4vw,20px);color:var(--ink-2);margin:0;max-width:60ch}
+h2{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:22px;font-weight:650;
+  margin:52px 0 10px;letter-spacing:-.01em}
+p{margin:0 0 16px;max-width:68ch}
+a{color:var(--r)}
+.byline{margin:26px 0 0}
+.stats{display:flex;flex-wrap:wrap;gap:10px 34px;margin:26px 0 0;
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-3)}
+.stats b{display:block;font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:25px;
+  font-weight:650;color:var(--ink);line-height:1.2}
+.editions{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:26px 0 8px}
+@media (max-width:720px){.editions{grid-template-columns:1fr}}
+.ed{display:block;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;
+  padding:22px 22px 20px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+.ed:hover{border-color:var(--ink);transform:translateY(-1px)}
+.ed .lvl{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;margin:0 0 6px}
+.ed.b .lvl{color:var(--s)} .ed.p .lvl{color:var(--r)}
+.ed h3{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:20px;font-weight:650;margin:0 0 8px}
+.ed p{font-size:14.5px;color:var(--ink-2);margin:0 0 12px}
+.ed .meta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+.ed .go{display:inline-block;margin-top:14px;font-size:14px;font-weight:600;color:var(--r)}
+.depths{border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin:20px 0}
+.depth{display:grid;grid-template-columns:96px 1fr;gap:0;border-bottom:1px solid var(--rule-2);
+  background:var(--sheet)}
+.depth:last-child{border-bottom:0}
+.depth .k{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500;
+  padding:16px 14px;border-right:1px solid var(--rule-2);color:var(--ink)}
+.depth.exp .k{color:var(--ink)} .depth.case .k{color:var(--r)}
+.depth .d{padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
+.depth .d b{color:var(--ink);font-weight:600}
+.note{background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--art);
+  border-radius:0 8px 8px 0;padding:16px 20px;margin:22px 0;font-size:14.5px;color:var(--ink-2)}
+.note b{color:var(--ink)}
+.sess{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 0 8px}
+@media (max-width:720px){.sess{grid-template-columns:1fr}}
+.sl{display:flex;align-items:baseline;gap:12px;background:var(--sheet);
+  border:1px solid var(--rule);border-radius:8px;padding:12px 14px;
+  text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+.sl:hover{border-color:var(--ink);transform:translateY(-1px)}
+.sl .n{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--r);flex:0 0 42px}
+.sl .t{font-size:14.5px;font-weight:600;line-height:1.35}
+.sl .c{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
+  display:block;font-weight:400;margin-top:3px}
+.sl.thin .n{color:var(--ink-3)}
+footer{margin-top:56px;padding-top:26px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink-3)}
+footer p{max-width:68ch;margin:0 0 12px}
+footer b{color:var(--ink-2)}
+.lic{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.04em}
+/* author byline — avatar with a hover/focus card carrying the profile links */
+.abx{display:inline-flex;align-items:center;position:relative}
+.abx-t{display:flex;align-items:center;gap:12px;background:none;border:0;padding:4px;margin:-4px;
+  font:inherit;color:inherit;cursor:pointer;border-radius:999px;text-align:left}
+.abx-t:focus-visible{outline:2px solid var(--focus,#E8A33D);outline-offset:3px}
+.abx-ph{width:44px;height:44px;border-radius:50%;object-fit:cover;display:block;flex:0 0 auto;
+  border:1px solid var(--rule);background:var(--rule-2)}
+.abx-r{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-3);display:block;line-height:1.3}
+.abx-n{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:15.5px;font-weight:650;
+  color:var(--ink);display:block;line-height:1.3;margin-top:2px;letter-spacing:-.005em}
+.abx-c{position:absolute;top:calc(100% + 10px);left:0;z-index:60;width:max-content;
+  max-width:min(330px,calc(100vw - 44px));background:var(--sheet);border:1px solid var(--rule);
+  border-radius:12px;box-shadow:var(--shadow);padding:15px 17px;
+  opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;
+  transition:opacity .14s ease,transform .14s ease,visibility .14s}
+.abx:hover .abx-c,.abx:focus-within .abx-c{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+.abx-c p{margin:0 0 11px;max-width:none;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+.abx-l{display:flex;gap:16px;flex-wrap:wrap}
+.abx-c a{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--r);
+  text-decoration:none;border-bottom:1px solid transparent}
+.abx-c a:hover,.abx-c a:focus-visible{border-bottom-color:currentColor}
+@media (prefers-reduced-motion:reduce){.abx-c{transition:none;transform:none}}
+
+/* ---- private usage panel ---- */
+.pmgs{--pmgs-bar:#4A5BB8;max-width:960px;margin:28px auto 56px;padding:22px 24px 26px;background:var(--sheet);
+  border:1px solid var(--rule);border-radius:10px;box-shadow:var(--shadow)}
+.pmgs-h{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:19px;font-weight:700;
+  color:var(--ink);margin:0 0 14px;letter-spacing:-.01em}
+.pmgs-sub{font-family:"IBM Plex Sans",sans-serif;font-size:12px;font-weight:400;color:var(--ink-3);letter-spacing:0}
+.pmgs-warn{font-size:13px;line-height:1.55;color:var(--ink-2);background:var(--paper);
+  border-left:3px solid var(--art);border-radius:0 6px 6px 0;padding:11px 14px;margin:0 0 18px}
+.pmgs-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:2px;
+  background:var(--rule-2);border:1px solid var(--rule-2);border-radius:8px;overflow:hidden}
+.pmgs-t{background:var(--sheet);padding:13px 14px}
+.pmgs-n{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:500;color:var(--ink);line-height:1.1}
+.pmgs-l{font-size:11.5px;color:var(--ink-3);margin-top:3px;letter-spacing:.01em}
+.pmgs-trend{font-size:13px;color:var(--ink-2);margin:14px 0 0;line-height:1.5}
+.pmgs-fig{margin:22px 0 0;padding:0}
+.pmgs-fig figcaption{font-size:12.5px;font-weight:600;color:var(--ink-2);margin:0 0 9px;
+  text-transform:uppercase;letter-spacing:.05em}
+.pmgs-chart{overflow-x:auto}
+.pmgs-chart svg{display:block;max-width:100%;height:auto}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pmgs{--pmgs-bar:#7484DC}}
+.pmgs-bar{fill:var(--pmgs-bar)}
+.pmgs-bar:hover{fill:var(--ink)}
+.pmgs-ax{stroke:var(--rule);stroke-width:1}
+.pmgs-axt{font-family:"IBM Plex Mono",monospace;font-size:9px;fill:var(--ink-3)}
+.pmgs-vlab{font-family:"IBM Plex Mono",monospace;font-size:9.5px;fill:var(--ink-2)}
+.pmgs-tog{font-family:"IBM Plex Sans",sans-serif;font-size:11.5px;color:var(--ink-2);
+  background:none;border:1px solid var(--rule);border-radius:5px;padding:4px 9px;margin-top:9px;cursor:pointer}
+.pmgs-tog:hover{border-color:var(--ink-3);color:var(--ink)}
+.pmgs table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:4px}
+.pmgs th{text-align:left;font-weight:600;color:var(--ink-3);font-size:11px;text-transform:uppercase;
+  letter-spacing:.04em;padding:5px 9px 5px 0;border-bottom:1px solid var(--rule)}
+.pmgs td{padding:5px 9px 5px 0;border-bottom:1px solid var(--rule-2);color:var(--ink-2)}
+.pmgs td.n{font-family:"IBM Plex Mono",monospace;color:var(--ink);white-space:nowrap}
+.pmgs td.k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink)}
+.pmgs-mini{display:inline-block;height:7px;border-radius:0 3px 3px 0;background:var(--pmgs-bar);vertical-align:middle}
+.pmgs-foot{font-size:12px;color:var(--ink-3);margin:20px 0 0;line-height:1.5}
+.pmgs-link{display:none;font-size:12px;color:var(--ink-3)}
+.pmgs-link button{font:inherit;color:var(--r);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">An open teaching resource &nbsp;·&nbsp; Version 20 &nbsp;·&nbsp; Last updated 26 October 2026</p>
+  <h1>The Product Management Knowledge Graph</h1>
+  <p class="stand">A prerequisite map of the whole discipline — what you have to understand before a topic makes sense, and what it unlocks once it does. Every topic comes with two explainers and two teaching cases.</p>
+  <div class="byline">
+<span class="abx">
+  <button class="abx-t" type="button" aria-describedby="abxcard">
+    <img class="abx-ph" src="img/author.jpg" width="44" height="44" alt="Chandrashekhar V"
+         onerror="this.style.display='none'">
+    <span>
+      <span class="abx-r">Created and maintained by</span>
+      <span class="abx-n">Chandrashekhar V</span>
+    </span>
+  </button>
+  <span class="abx-c" id="abxcard">
+    <p>Former Chief Product Officer, now teaching Software Product Management at the Indian School of Business. This map draws on years of practitioner experience, not only on how the subject is taught.</p>
+    <span class="abx-l"><a href="https://www.linkedin.com/in/vattikuti/" rel="noopener" target="_blank">LinkedIn &#8599;</a><a href="https://x.com/vcshekhar" rel="noopener" target="_blank">X &middot; @vcshekhar &#8599;</a></span>
+  </span>
+</span>
+  </div>
+  <div class="stats">
+    <span><b>1,046</b> topics</span>
+    <span><b>49</b> modules</span>
+    <span><b>1,656</b> prerequisite edges</span>
+    <span><b>50</b> programmes benchmarked</span>
+  </div>
+</header>
+
+<h2>Browse by session</h2>
+<p>Pick a session and the Beginner graph opens showing only the topics taught in it, zoomed to fit, with everything else hidden — so you can see what a session covers and how its topics depend on one another, without the other thousand. <b>Show the whole graph</b> in the banner steps back out to the full map.</p>
+
+<div class="sess">
+  <a class="sl" href="beginner.html#session=1">
+    <span class="n">S1</span>
+    <span class="t">Course Introduction &amp; Personas<span class="c">37 topics &nbsp;·&nbsp; all 37 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=2">
+    <span class="n">S2</span>
+    <span class="t">Defining Customer Needs<span class="c">29 topics &nbsp;·&nbsp; all 29 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=3">
+    <span class="n">S3</span>
+    <span class="t">Exploring Solutions, Pitch &amp; Teams<span class="c">35 topics &nbsp;·&nbsp; all 35 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=4">
+    <span class="n">S4</span>
+    <span class="t">MVP and Prototyping<span class="c">40 topics &nbsp;·&nbsp; all 40 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=5">
+    <span class="n">S5</span>
+    <span class="t">Persuasive Technology &amp; Ethics<span class="c">21 topics &nbsp;·&nbsp; all 21 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=6">
+    <span class="n">S6</span>
+    <span class="t">Product Metrics &amp; Analytics 1<span class="c">29 topics &nbsp;·&nbsp; all 29 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=7">
+    <span class="n">S7</span>
+    <span class="t">Product Delivery, Execution &amp; Analytics 2<span class="c">43 topics &nbsp;·&nbsp; all 43 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=8">
+    <span class="n">S8</span>
+    <span class="t">Working Across Boundaries &amp; Product Strategy<span class="c">28 topics &nbsp;·&nbsp; all 28 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=9">
+    <span class="n">S9</span>
+    <span class="t">Go-to-Market &amp; Launch Management<span class="c">41 topics &nbsp;·&nbsp; all 41 with readings</span></span>
+  </a>
+  <a class="sl" href="beginner.html#session=10">
+    <span class="n">S10</span>
+    <span class="t">AI &amp; Product Management · PM Interviews &amp; Careers<span class="c">54 topics &nbsp;·&nbsp; all 54 with readings</span></span>
+  </a>
+</div>
+
+<div class="note">
+  <b>How complete each session is.</b> <b>All ten sessions are finished</b> — every topic each one teaches carries all four readings, two explainers and two cases, and none is still filling in. Every link works regardless — it shows the map of what the session covers and how its topics depend on one another — and a topic with nothing written yet still opens an editable version of the prompt that would have written it, which you can run in your own Claude account.</div>
+
+<h2>Two editions</h2>
+<p>The same map at two altitudes. Start with Beginner if product management is new to you; the Practitioner edition adds the depth that only matters once you have shipped something.</p>
+
+<div class="editions">
+  <a class="ed b" href="beginner.html">
+    <p class="lvl">Level 1</p>
+    <h3>Beginner</h3>
+    <p>The foundations, in dependency order. Enough of the map to orient yourself without being buried by it.</p>
+    <p class="meta">471 topics</p>
+    <span class="go">Open the Beginner graph →</span>
+  </a>
+  <a class="ed p" href="practitioner.html">
+    <p class="lvl">Level 2</p>
+    <h3>Practitioner</h3>
+    <p>Everything, including the specialisations — B2B, platforms, hardware, CPG, AI products — and the topics experienced PMs argue about.</p>
+    <p class="meta">1,046 topics</p>
+    <span class="go">Open the Practitioner graph →</span>
+  </a>
+</div>
+
+<h2>Four ways into any topic</h2>
+<p>Click a topic and you can read about it at two depths, or work a case about it at two depths. The explainers teach the idea; the cases make you use it under conditions where the answer is not obvious.</p>
+
+<div class="depths">
+  <div class="depth exp"><div class="k">Exp20</div><div class="d"><b>Working knowledge.</b> Enough to use the idea correctly next week, plus the nuances that trip up newcomers and the questions worth asking before you rely on it.</div></div>
+  <div class="depth exp"><div class="k">Exp40</div><div class="d"><b>Near-expert depth.</b> The schools of thought and what exactly they disagree on, the hard edge cases, how it differs across product types and company stages, and the diagnostics practitioners actually use.</div></div>
+  <div class="depth case"><div class="k">Case20</div><div class="d"><b>A decision case.</b> A protagonist, a deadline, exhibits with real numbers, three distinct options, and a short teaching note showing one defensible path.</div></div>
+  <div class="depth case"><div class="k">Case40</div><div class="d"><b>A case with no clear path.</b> Conflicting exhibits, stakeholders with something they are not saying, and a framing that may itself be wrong. It does not resolve, and there is no teaching note — you have to work it out.</div></div>
+</div>
+
+<p>Every case is set in India: a fictional company modelled on real Indian firms, with real brands, regulators and institutions as market context, money in lakh and crore, and a team spread across Bengaluru, Pune and offices abroad, so that time zones and markets bear on the decision.</p>
+
+<h2>Two AI threads, and an AI lens over everything else</h2>
+<p>AI shows up in this map three times over, because it changes product work in three different ways.</p>
+<p>The first thread, <b>AI is changing the craft</b>, follows what has happened to the job itself now that building is cheap and judgement is not — discovery when synthesis costs nothing, the prototype as the new specification, reviewing work you did not write, where the bottleneck actually moved, and what all of that does to teams, pricing, moats and careers. The second, <b>Building AI products</b>, is product management for products where a model <em>is</em> the product: problem–model fit, evaluation and golden sets, the agent stack, cost and latency, trust and safety, and operating a model in production. Either thread can be followed in reading order from the toolbar.</p>
+<p>Underneath both threads sits an <b>AI vocabulary primer</b> — 32 topics defining the words that get used in the room: tokens and context windows, embeddings and vector search, fine-tuning against LoRA and quantisation, RAG and chunking, agents and harnesses, evals and golden sets, what SOTA on a leaderboard does and does not mean. Each one says what the term is, where the industry uses it loosely, and which decision it bears on.</p>
+<p>The <b>AI lens</b> is the third. Switch it on and every module in the graph is shaded by how much that practice has genuinely changed — and the point of it is the modules that come back pale. Experimentation and causal inference have barely moved; the statistics are the statistics. Hardware, CPG and portfolio decisions are constrained by physics, money and politics, not by what a model can generate. Qualitative research, prototyping, specification and analytics have changed a great deal. A map where everything glowed would tell you nothing, so this one does not.</p>
+
+<div class="note" style="border-left-color:var(--r)">
+  <b>Reading it offline.</b> Unzip the folder and open <code>index.html</code> — everything works from disk, with no server and no account. One browser quirk: when opened straight from a folder, topic pages open in a new tab rather than inside the reader, because browsers refuse to load a local file inside a frame.
+</div>
+
+<div class="note">
+  <b>Coverage so far.</b> 36 modules carry pre-written reading pages — the largest are <b>Product Metrics &amp; Measurement</b> (28), <b>Product Analytics &amp; Data Practice</b> (26), <b>Delivery Process &amp; Engineering Collaboration</b> (23), <b>Prioritisation &amp; Decision-Making</b> (23), <b>Experimentation &amp; Causal Inference</b> (21), <b>Roadmapping, Planning &amp; OKRs</b> (19), <b>Technical Fluency</b> (19), <b>Communication &amp; Stakeholder Management</b> (18) and <b>AI &amp; ML Product Management</b> (17) — <b>1,715 pages across 472 topics</b>, every one of them shipped inside this site; 376 of those topics sit in the Beginner edition. Every page in this build passes an automated arithmetic check on its tables, totals and percentages. Every other topic opens an editable version of the prompt that would have written it, so you can run it in your own Claude account.</div>
+
+<h2>Three traits, and what this map can't give you</h2>
+<p>Everything else here is drawn from how product management is taught. This part is not — it is a personal view, and it is signed.</p>
+<div class="depths">
+  <div class="depth exp"><div class="k">High Agency</div><div class="d"><b>An internal locus of control.</b> Great PMs fix systemic incentives rather than accepting blockers as fate.</div></div>
+  <div class="depth exp"><div class="k">Product Sense</div><div class="d"><b>Intuition, not just optimisation.</b> Great PMs sense what users <em>will</em> want before the data proves it.</div></div>
+  <div class="depth case"><div class="k">Curiosity &amp; Empathy</div><div class="d"><b>Intellectual curiosity and contextual empathy.</b> Always spinning threads on why things are the way they are — pointed at systems and at people, who are understood inside their real circumstances rather than as an abstraction invented at a desk.</div></div>
+</div>
+<p>Switch the pillar lens on inside either graph and the three shade the map differently. Product sense and curiosity each cover about twenty modules and four hundred topics. Agency covers fourteen and roughly two hundred and seventy — and those modules teach you <em>about</em> agency rather than building it. That is not a gap in the map; it is a fact about the trait. Use the map for two of the three, and find yourself a situation for the third.</p>
+
+<h2>Where this came from</h2>
+<p>This was built for the Software Product Management course at the Indian School of Business, and is used with students there. The course covers a deliberately small part of this map; the rest is here so students can see what lies beyond the syllabus and go there on their own.</p>
+<p>The structure — lesson-sized topics, explicit prerequisites, and a topic that stays locked until its prerequisites make sense — is borrowed from Math Academy's knowledge graph. The module coverage, the four teaching lenses and the sequencing pathways draw on a 2026 benchmark of fifty product management programmes at leading business and technology schools.</p>
+
+<footer>
+  <p><b>How these pages were made.</b> The explainers and case studies were generated with Claude from a curated set of prompts, then checked for structure, length and arithmetic before publication. The companies, people and figures in the cases are fictional, invented to make a teaching point; where real firms, brands and regulators appear, they are market context only and nothing discreditable is attributed to them. Nothing here is investment, legal or professional advice, and no page should be treated as a factual account of any real company.</p>
+  <p><b>Credit.</b> Assembled by Chandrashekhar V for the Software Product Management course at the Indian School of Business. Find him on <a href="https://www.linkedin.com/in/vattikuti/" rel="noopener" target="_blank">LinkedIn</a> and on X as <a href="https://x.com/vcshekhar" rel="noopener" target="_blank">@vcshekhar</a>.</p>
+  <p class="lic"><b>Licence.</b> Creative Commons Attribution–NonCommercial–ShareAlike 4.0 International (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license noopener" target="_blank">CC BY-NC-SA 4.0</a>). You may share and adapt this material for non-commercial purposes with credit, provided you license your adaptations the same way.</p>
+</footer>
+
+</div>
+
+<!-- pmkg-analytics: visit telemetry + private usage panel. Required; make_student_site.py asserts the markers. -->
+
+<!-- ===== private usage panel (revealed only when the analytics read succeeds) ===== -->
+<section id="pmgStats" class="pmgs" hidden aria-label="Usage statistics, private to the owner">
+  <h2 class="pmgs-h">Usage <span class="pmgs-sub">private &middot; only visible to accounts that can read this artifact's analytics</span></h2>
+
+  <div class="pmgs-warn" role="note">
+    <b>Signed-out visitors are not counted.</b> A published artifact's database is unreachable to
+    anyone who is not signed in, so a student opening the public link records nothing. A low number
+    here does <em>not</em> mean low usage &mdash; it means the visitor was signed in. Read these
+    figures as "sessions by signed-in viewers", not as total traffic.
+  </div>
+
+  <div class="pmgs-tiles">
+    <div class="pmgs-t"><div class="pmgs-n" id="st-vis">&mdash;</div><div class="pmgs-l">distinct visitors</div></div>
+    <div class="pmgs-t"><div class="pmgs-n" id="st-ses">&mdash;</div><div class="pmgs-l">sessions</div></div>
+    <div class="pmgs-t"><div class="pmgs-n" id="st-opn">&mdash;</div><div class="pmgs-l">reading pages opened</div></div>
+    <div class="pmgs-t"><div class="pmgs-n" id="st-hrs">&mdash;</div><div class="pmgs-l">active hours</div></div>
+  </div>
+
+  <p class="pmgs-trend" id="st-trend"></p>
+
+  <figure class="pmgs-fig">
+    <figcaption>Sessions per day <span class="pmgs-sub" id="st-range"></span></figcaption>
+    <div id="st-chart" class="pmgs-chart"></div>
+    <button type="button" class="pmgs-tog" id="st-togs" aria-expanded="false">Show as table</button>
+    <div id="st-tbl" hidden></div>
+  </figure>
+
+  <figure class="pmgs-fig">
+    <figcaption>Most opened topics</figcaption>
+    <div id="st-topics"></div>
+  </figure>
+
+  <p class="pmgs-foot" id="st-split"></p>
+</section>
+
+<script>
+/* ---------- 1. visit telemetry (same scheme as the two edition pages) ---------- */
+(async () => {
+  let db = null;
+  try { db = await window.claude.use('db'); } catch (e) {}
+  if (!db) return;                                  // signed out, or db not granted
+  let vid;
+  try {
+    vid = localStorage.getItem('pmkg_vid');
+    if (!vid) { vid = 'v' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+                localStorage.setItem('pmkg_vid', vid); }
+  } catch (e) { vid = 'anon'; }
+
+  const IDLE = 60000, FLUSH = 30000;
+  const started = new Date().toISOString();
+  const docId = vid + '__' + started.replace(/[:.]/g, '-');
+  const ed = ((location.pathname.match(/([^/]+)\.html$/) || [])[1]) || 'index';
+  let activeMs = 0, mark = Date.now(), lastAct = Date.now(), dirty = true;
+
+  const idle = () => Date.now() - lastAct > IDLE;
+  const tick = () => { const n = Date.now();
+    if (document.visibilityState === 'visible' && !idle()) activeMs += n - mark;
+    mark = n; };
+  ['pointerdown','keydown','wheel','touchstart'].forEach(e =>
+    addEventListener(e, () => { lastAct = Date.now(); dirty = true; }, { passive: true }));
+  setInterval(tick, 5000);
+
+  const flush = async (final) => {
+    tick(); if (!dirty && !final) return;
+    dirty = false;
+    try {
+      await db.doc('analytics/' + docId).set({
+        vid: vid, edition: ed, startedAt: started, lastAt: new Date().toISOString(),
+        activeMs: Math.round(activeMs / 1000) * 1000, opens: [], openCount: 0,
+        ref: (location.hash || '').slice(0, 40)
+      });
+    } catch (e) { dirty = true; }                    // rules refused, offline: drop it quietly
+  };
+  setInterval(() => flush(false), FLUSH);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(true); });
+  addEventListener('pagehide', () => flush(true));
+  flush(true);
+})();
+
+/* ---------- 2. private usage panel ---------- */
+(async () => {
+  const $ = id => document.getElementById(id);
+  const sec = $('pmgStats');
+  if (!sec) return;
+
+  let db = null;
+  try { db = await window.claude.use('db'); } catch (e) {}
+  if (!db) return;                                  // signed out: no panel, no affordance
+
+  let rows = [];
+  try {
+    const snap = await db.collection('analytics').limit(1000).get();
+    rows = snap.docs.map(d => d.data()).filter(Boolean);
+  } catch (e) { return; }                           // rules refused: this viewer may not read analytics
+  if (!rows.length) return;
+
+  /* --- aggregate --- */
+  const vis = new Set(), eds = {}, byDay = new Map(), topics = new Map(), acts = {};
+  let opens = 0, ms = 0;
+  for (const r of rows) {
+    if (r.vid) vis.add(r.vid);
+    eds[r.edition || '?'] = (eds[r.edition || '?'] || 0) + 1;
+    const day = String(r.startedAt || '').slice(0, 10);
+    if (day) byDay.set(day, (byDay.get(day) || 0) + 1);
+    ms += Number(r.activeMs) || 0;
+    for (const o of (Array.isArray(r.opens) ? r.opens : [])) {
+      opens++;
+      if (o && o.t) topics.set(o.t, (topics.get(o.t) || 0) + 1);
+      if (o && o.a) acts[o.a] = (acts[o.a] || 0) + 1;
+    }
+  }
+
+  $('st-vis').textContent = vis.size;
+  $('st-ses').textContent = rows.length;
+  $('st-opn').textContent = opens;
+  $('st-hrs').textContent = (ms / 3600000).toFixed(1);
+
+  /* --- last 30 days, zero-filled --- */
+  const days = [], today = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000).toISOString().slice(0, 10);
+    days.push({ d: d, v: byDay.get(d) || 0 });
+  }
+  const sum = a => a.reduce((t, x) => t + x.v, 0);
+  const wk = sum(days.slice(23)), prev = sum(days.slice(16, 23));
+  $('st-range').textContent = '· last 30 days';
+  $('st-trend').textContent = prev === 0 && wk === 0
+    ? 'No sessions in the last 14 days.'
+    : 'Last 7 days: ' + wk + ' session' + (wk === 1 ? '' : 's') + '. Previous 7 days: ' + prev
+      + '. ' + (wk > prev ? 'Up.' : wk < prev ? 'Down.' : 'Flat.');
+
+  /* --- single-series bar chart: rounded data-ends, 2px gaps, baseline-anchored --- */
+  const W = 760, H = 150, PT = 16, PB = 22, slot = W / days.length, bw = Math.max(3, slot - 2);
+  const max = Math.max(1, ...days.map(x => x.v)), plot = H - PT - PB;
+  const iMax = days.reduce((b, x, i) => x.v > days[b].v ? i : b, 0);
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sessions per day, last 30 days">';
+  days.forEach((x, i) => {
+    const h = x.v === 0 ? 0 : Math.max(3, (x.v / max) * plot);
+    const bx = i * slot + 1, by = PT + plot - h, r = Math.min(4, bw / 2, h);
+    const lab = x.d + ': ' + x.v + ' session' + (x.v === 1 ? '' : 's');
+    if (h > 0) {
+      s += '<path class="pmgs-bar" d="M' + bx + ' ' + (by + h) + 'V' + (by + r)
+         + 'a' + r + ' ' + r + ' 0 0 1 ' + r + ' ' + (-r) + 'h' + (bw - 2 * r)
+         + 'a' + r + ' ' + r + ' 0 0 1 ' + r + ' ' + r + 'V' + (by + h) + 'Z"><title>' + lab + '</title></path>';
+      if (i === iMax) s += '<text class="pmgs-vlab" x="' + (bx + bw / 2) + '" y="' + (by - 4)
+         + '" text-anchor="middle">' + x.v + '</text>';
+    } else {
+      s += '<rect x="' + bx + '" y="' + (PT + plot - 1) + '" width="' + bw + '" height="1" fill="var(--rule-2)"><title>' + lab + '</title></rect>';
+    }
+  });
+  s += '<line class="pmgs-ax" x1="0" y1="' + (PT + plot + .5) + '" x2="' + W + '" y2="' + (PT + plot + .5) + '"/>';
+  s += '<text class="pmgs-axt" x="0" y="' + (H - 7) + '">' + days[0].d + '</text>';
+  s += '<text class="pmgs-axt" x="' + W + '" y="' + (H - 7) + '" text-anchor="end">' + days[29].d + '</text>';
+  $('st-chart').innerHTML = s + '</svg>';
+
+  /* --- table view of the same series (accessibility / print) --- */
+  const nz = days.filter(x => x.v > 0);
+  $('st-tbl').innerHTML = '<table><thead><tr><th>Day</th><th>Sessions</th></tr></thead><tbody>'
+    + (nz.length ? nz.map(x => '<tr><td class="k">' + x.d + '</td><td class="n">' + x.v + '</td></tr>').join('')
+                 : '<tr><td colspan="2">No sessions in this window.</td></tr>')
+    + '</tbody></table>';
+  $('st-togs').addEventListener('click', e => {
+    const t = $('st-tbl'), open = t.hasAttribute('hidden');
+    if (open) { t.removeAttribute('hidden'); } else { t.setAttribute('hidden',''); }
+    e.currentTarget.setAttribute('aria-expanded', String(open));
+    e.currentTarget.textContent = open ? 'Hide table' : 'Show as table';
+  });
+
+  /* --- top topics --- */
+  const top = [...topics.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const tmax = top.length ? top[0][1] : 1;
+  $('st-topics').innerHTML = top.length
+    ? '<table><thead><tr><th>Topic</th><th>Opens</th><th></th></tr></thead><tbody>'
+      + top.map(t => '<tr><td class="k">' + t[0] + '</td><td class="n">' + t[1]
+        + '</td><td><span class="pmgs-mini" style="width:' + Math.round((t[1] / tmax) * 110) + 'px"></span></td></tr>').join('')
+      + '</tbody></table>'
+      + '<p class="pmgs-foot">' + topics.size + ' distinct topics opened. By depth: '
+      + Object.entries(acts).sort((a, b) => b[1] - a[1]).map(a => a[0] + ' ' + a[1]).join(', ') + '.</p>'
+    : '<p class="pmgs-foot">No reading pages opened yet. The landing page does not open readings; '
+      + 'these counts come from the Beginner and Practitioner editions.</p>';
+
+  $('st-split').textContent = 'By page: '
+    + Object.entries(eds).sort((a, b) => b[1] - a[1]).map(e => e[0] + ' ' + e[1]).join(', ')
+    + '. Reading ' + rows.length + ' session row' + (rows.length === 1 ? '' : 's') + ' from the analytics collection.';
+
+  /* --- reveal: a quiet footer affordance, plus #stats --- */
+  const link = document.createElement('p');
+  link.className = 'pmgs-link';
+  link.innerHTML = '<button type="button">Usage statistics (private)</button>';
+  link.style.display = 'block';
+  const show = () => { sec.removeAttribute('hidden'); link.style.display = 'none';
+                       sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  link.querySelector('button').addEventListener('click', show);
+  const foot = document.querySelector('footer');
+  if (foot) foot.appendChild(link); else sec.parentNode.insertBefore(link, sec);
+  if (/(^|[#&])stats\b/.test(location.hash)) show();
+})();
+</script>
+
+</body>
+</html>
+
+</body></html>
