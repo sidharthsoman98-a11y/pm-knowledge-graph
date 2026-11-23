@@ -5,7 +5,11 @@
 //   npm run sync -- ~/Downloads/pm-knowledge-graph.zip                      (a zip)
 //   npm run sync -- --baseline        record the current ./source as the first change-log entry
 //
-// Flags: --no-build (skip the rebuild), --force (record and rebuild even if nothing changed)
+// Flags: --no-build (skip the rebuild), --force (record and rebuild even if nothing changed),
+//        --check (report additive/structural and exit without changing anything),
+//        --approve (apply a structural change; without it a structural change is only proposed)
+//
+// Exit codes: 0 applied or nothing to do · 3 structural change held for approval · 2 bad input · 1 build failed
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,6 +17,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import AdmZip from 'adm-zip';
 import { loadSource, pageHash } from './lib/source.mjs';
+import { classify } from './lib/classify.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = path.join(ROOT, 'source');
@@ -102,6 +107,22 @@ if (prev && prev.contentHash === next.contentHash && !flag('--force')) {
   process.exit(0);
 }
 const sections = prev ? summarise(prev, next) : [];
+const verdict = prev ? classify(prev, next) : { kind: 'additive', reasons: [], additions: [] };
+if (flag('--check')) { console.log(JSON.stringify({ version: next.version, contentHash: next.contentHash, ...verdict }, null, 2)); process.exit(verdict.kind === 'structural' ? 3 : 0); }
+if (verdict.kind === 'structural' && !flag('--approve')) {
+  const dir = path.join(ROOT, 'data/proposals'); fs.mkdirSync(dir, { recursive: true });
+  const name = `${today}-v${next.version.number ?? 'x'}-${next.contentHash}`;
+  const md = [`# Structural change proposed: Version ${next.version.number} (${next.version.updated})`, '',
+    'The new source does not fit the current structure. Nothing has been applied. Approve by running:', '',
+    '    npm run sync -- "<same folder or zip>" --approve', '', '## Why this needs approval', ...verdict.reasons.map(r => `- ${r.text}`), '',
+    '## Additions that would also be applied', ...(verdict.additions.length ? verdict.additions.map(a => `- ${a}`) : ['- none']), '',
+    '## Full change list', ...sections.flatMap(s => [`### ${s.label} (${s.items.length})`, ...s.items.slice(0, 200).map(i => `- ${i.text}`)])].join('\n');
+  fs.writeFileSync(path.join(dir, name + '.md'), md + '\n');
+  fs.writeFileSync(path.join(dir, name + '.json'), JSON.stringify({ date: today, version: next.version, contentHash: next.contentHash, ...verdict, sections }, null, 2) + '\n');
+  console.log(`STRUCTURAL change held for approval (${verdict.reasons.length} reason${verdict.reasons.length === 1 ? '' : 's'}). Proposal written to data/proposals/${name}.md`);
+  verdict.reasons.slice(0, 12).forEach(r => console.log('  - ' + r.text));
+  process.exit(3);
+}
 const count = n => sections.find(s => s.label === n)?.items.length || 0;
 const summary = prev ? [
   prev.version.number !== next.version.number ? `Version ${prev.version.number} → ${next.version.number}.` : `Same version number (${next.version.number}); content changed.`,
@@ -110,7 +131,7 @@ const summary = prev ? [
 ].join(' ') : 'Initial import.';
 copySource(root);
 const log = readLog();
-log.push({ date: today, title: `Synced to Version ${next.version.number} (${next.version.updated})`, version: next.version, contentHash: next.contentHash, summary, sections });
+log.push({ date: today, title: `Synced to Version ${next.version.number} (${next.version.updated})`, kind: verdict.kind, approved: verdict.kind === 'structural' ? true : undefined, version: next.version, contentHash: next.contentHash, summary: `${verdict.kind === 'structural' ? 'Structural change, approved. ' : 'Additions only. '}${summary}`, sections });
 writeLog(log);
 console.log(summary);
 build();

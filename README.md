@@ -43,6 +43,16 @@ npm run build      # about 30 seconds
 npm run serve      # http://localhost:4321
 ```
 
+
+## Update policy: additions are automatic, restructuring needs approval
+
+`npm run sync` sorts every new version of the source into one of two kinds (`scripts/lib/classify.mjs`):
+
+- **Additive**, applied automatically: new topics inside existing modules, new or rewritten reading pages, wording edits, new prerequisite links that keep existing lessons in their order, and outline-only topics gaining readings.
+- **Structural**, held for approval: domains or modules added, removed, renamed or moved; topics removed or moved between modules; a topic changing edition or ISB sessions; a lesson losing its readings; or existing lessons changing their order in a path.
+
+A structural change is not applied. `sync` writes a proposal to `data/proposals/<date>-….md` listing why it is structural, then exits with code 3. Apply it with `npm run sync -- "<folder or zip>" --approve`. To see the verdict without changing anything, use `npm run sync -- "<folder>" --check`.
+
 ## Updates from the source artifact
 
 **What cannot be automated, and why.** The source lives at `https://claude.ai/artifact/MKCRzLnNkdx1whXTsydcBx`. A server cannot read it: claude.ai answers non-browser requests to its artifact API with a Cloudflare "verify you are human" challenge, and the artifact's files are only served inside a signed browser session. A cron job on Netlify, Vercel or GitHub would fail silently every night, so none is pretended here.
