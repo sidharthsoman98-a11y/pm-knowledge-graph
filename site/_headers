@@ -3,7 +3,7 @@
 /pagefind/*
   Cache-Control: public, max-age=3600
 /data/*
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=300, must-revalidate
 /sw.js
   Cache-Control: no-cache
 /version.json
