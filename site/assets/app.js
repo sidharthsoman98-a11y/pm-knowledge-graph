@@ -61,7 +61,9 @@
     return !!S.known[id] && stage === 'found';
   }
   const stepUrl = (id, k) => k === 'recall' ? `/t/${id}/${recallKind(id)}/#recall` : `/t/${id}/${k}/`;
-  const stepLabel = k => k === 'recall' ? 'Recall from memory' : (k.startsWith('case') ? `Work ${k === 'case20' ? 'Case20' : 'Case40'}` : `Read ${k === 'exp20' ? 'Exp20' : 'Exp40'}`);
+  const HUMAN = { exp20: 'Explainer', exp40: 'Deep dive', case20: 'Case', case40: 'Open case', recall: 'Recall' };
+  const STEP = { exp20: 'Read the explainer', exp40: 'Read the deep dive', case20: 'Work the case', case40: 'Work the open case', recall: 'Recall from memory' };
+  const stepLabel = k => STEP[k];
   const stepMin = (id, k) => k === 'recall' ? 3 : (PATH.T[id][3 + KINDS.indexOf(k)] || 0) / 220;
   function items(tk = track()) {
     const out = []; let u = 0;
@@ -84,7 +86,7 @@
   function upcoming(it, hereK) {
     if (!it) return null; const i = it.steps.indexOf(hereK);
     if (i < 0) return nextAction(it);
-    const k = it.steps.slice(i + 1).find(x => !stepDone(it.id, x, it.stage));
+    const k = [...it.steps.slice(i + 1), ...it.steps.slice(0, i)].find(x => !stepDone(it.id, x, it.stage));
     if (k) return { url: stepUrl(it.id, k), label: `Then: ${stepLabel(k)}`, sub: PATH.T[it.id][0], min: stepMin(it.id, k), id: it.id, k };
     const n = afterItem(it); if (!n) return { url: '/learn/', label: 'Path complete', min: 0 };
     const k2 = curStep(n); return { url: stepUrl(n.id, k2), label: `Next lesson: ${stepLabel(k2)}`, sub: PATH.T[n.id][0], min: stepMin(n.id, k2), id: n.id, k: k2 };
@@ -96,10 +98,6 @@
   $('#themeToggle')?.addEventListener('click', () => {
     const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
     root.dataset.theme = dark ? 'light' : 'dark'; S.prefs.theme = root.dataset.theme; save();
-  });
-  $('#edToggle')?.addEventListener('click', () => {
-    const b = !root.classList.contains('ed-b'); root.classList.toggle('ed-b', b); S.prefs.edition = b ? 'beginner' : 'all'; save();
-    toast(b ? 'Beginner edition: Practitioner-only topics are hidden in lists' : 'Showing all topics'); paint();
   });
   $('#menuToggle')?.addEventListener('click', e => { const n = $('.nav'); const o = n.classList.toggle('open'); e.currentTarget.setAttribute('aria-expanded', o); });
 
@@ -149,8 +147,8 @@
     let bar = $('#pbar'); if (!bar) { bar = document.createElement('div'); bar.id = 'pbar'; bar.className = 'pbar'; const c = $('.crumbs'); c ? c.after(bar) : $('main').before(bar); }
     const na = RC ? upcoming(it, hereKind()) : nextAction(it);
     const here = location.pathname;
-    const stepChips = it.steps.map(k => `<a href="${stepUrl(it.id, k)}" class="pch${stepDone(it.id, k, it.stage) ? ' ok' : ''}${here === stepUrl(it.id, k).split('#')[0] && (k !== 'recall' || location.hash === '#recall') ? ' cur' : ''}">${k === 'recall' ? 'Recall' : stepLabel(k).replace(/^(Read|Work) /, '')}</a>`).join('<span class="psep">›</span>');
-    bar.innerHTML = `<div class="pbin"><a class="pctx" href="/learn/#u${it.unit}"><small>${esc(it.stageLabel)} · Unit ${it.unit} · lesson ${it.pos} of ${it.of}</small><b>${esc(it.unitTitle)}</b></a><div class="psteps">${stepChips}</div>${na ? `<a class="btn pnext" href="${na.url}">${esc(na.label)} →</a>` : ''}</div>`;
+    const stepChips = it.steps.map(k => `<a href="${stepUrl(it.id, k)}" class="pch${stepDone(it.id, k, it.stage) ? ' ok' : ''}${here === stepUrl(it.id, k).split('#')[0] && (k !== 'recall' || location.hash === '#recall') ? ' cur' : ''}">${HUMAN[k]}</a>`).join('<span class="psep">›</span>');
+    bar.innerHTML = `<div class="pbin"><a class="pctx" href="/learn/#${track()}-u${it.unit}"><small>${esc(it.stageLabel)} · Unit ${it.unit} · lesson ${it.pos} of ${it.of}</small><b>${esc(it.unitTitle)}</b></a><div class="psteps">${stepChips}</div>${na && RC ? `<a class="btn pnext" href="${na.url}">${esc(na.label)} →</a>` : ''}</div>`;
   }
   /* topic page lesson panel */
   async function refreshLesson() {
@@ -158,7 +156,6 @@
     await getPath(); const id = L.dataset.id; if (!PATH.T[id]) return;
     const it = itemFor(id);
     $$('li[data-step]', L).forEach(li => { const k = li.dataset.step; const st = li.closest('ol').previousElementSibling?.textContent.startsWith('Depth') ? 'depth' : 'found'; li.classList.toggle('done', stepDone(id, k, st)); });
-    if (it) $('#lctx').textContent = `${it.stageLabel} · lesson ${it.pos} of ${it.of} in this unit`;
     const na = nextAction(it || { id, stage: 'found', steps: stepsFor(id, 'found') });
     const started = KINDS.some(k => S.read[k + ':' + id]) || learned(id);
     $('#lcta').innerHTML = na ? `<a class="btn big" href="${na.url}">${na.id === id ? (started ? 'Continue: ' : 'Start: ') + esc(na.label) : esc(na.label)} →</a><span class="small muted">${na.id === id ? '' : esc(na.sub) + ' · '}${na.min ? '~' + fmtH(na.min) : ''}</span>` : '';
@@ -166,7 +163,7 @@
     // readiness
     const pre = $$('.ready li[data-topic]'); if (pre.length) {
       const inPath = pre.filter(li => PATH.T[li.dataset.topic]); const notYet = inPath.filter(li => !learned(li.dataset.topic));
-      const note = $('#readyNote'); if (note) note.innerHTML = !inPath.length ? 'What this topic builds on, and why.' : notYet.length ? `<b>${notYet.length} of ${inPath.length} prerequisite lessons not learned yet.</b> The topic will make more sense after them.` : `All ${inPath.length} prerequisite lessons learned.`;
+      const note = $('#readyNote'); if (note) note.innerHTML = !inPath.length ? 'What this topic builds on, and why.' : notYet.length ? `Builds on ${notYet.length === inPath.length ? (inPath.length === 1 ? 'a lesson' : `${inPath.length} lessons`) : `${notYet.length} of ${inPath.length} lessons`} you have not done yet. Your path puts ${notYet.length === 1 ? 'it' : 'them'} first.` : `You have learned all ${inPath.length} prerequisite lesson${inPath.length === 1 ? '' : 's'}.`;
     }
   }
   function placeLesson() { const L = $('#lesson'), d = $('.lesson-d'), m = $('.lesson-m'); if (!L || !d || !m) return; const wide = matchMedia('(min-width: 1100px)').matches; (wide ? d : m).appendChild(L); }
@@ -338,20 +335,42 @@ ${done ? `<p class="small">Done ${ago(done.ts)} — you rated it <b>${['', 'coul
     $('#copyPrompt').addEventListener('click', async () => { try { await navigator.clipboard.writeText(compose()); $('#copied').textContent = 'Copied. Paste it into a new Claude chat.'; } catch { $('#copied').textContent = 'Copy failed — select the text and copy manually.'; } });
   })();
 
+
+  /* ───────── path chooser (Today, Learn, course and session pages) ───────── */
+  function initChooser(onPick) {
+    const ch = $('#chooser'); if (!ch) return;
+    const sel = $('#goalSel', ch); if (sel && S.prefs.goal) sel.value = String(S.prefs.goal);
+    const upd = () => {
+      const g = Number(sel?.value || S.prefs.goal || 45);
+      $$('.pcard', ch).forEach(c => {
+        const cur = S.prefs.track === c.dataset.track; c.classList.toggle('current', cur);
+        const pt = $('.ptime', c); const h = Number(pt.dataset.hours), h1 = Number(pt.dataset.first);
+        const dur = hh => { const days = Math.ceil(hh * 60 / g); return days > 120 ? `${Math.round(days / 30)} months` : `${Math.ceil(days / 7)} weeks`; };
+        pt.innerHTML = `At ${g} min a day: first part <b>~${h1} h</b>, about ${dur(h1)}; whole path <b>~${h} h</b>, about ${dur(h)}.`;
+        const b = $('[data-pick-track]', c); b.textContent = cur ? 'Continue with this path' : `Choose ${$('h3', c).textContent}`;
+      });
+    };
+    sel?.addEventListener('change', upd); upd();
+    ch.onPick = onPick;
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-pick-track]'); if (!b) return;
+    const changed = S.prefs.track !== b.dataset.pickTrack;
+    S.prefs.track = b.dataset.pickTrack; const sel = $('#goalSel'); S.prefs.goal = Number(sel?.value || S.prefs.goal || 45); save();
+    root.classList.add('setup');
+    if (b.dataset.go) { location.href = b.dataset.go; return; }
+    toast(changed ? `Path set: ${b.closest('.pcard')?.querySelector('h3')?.textContent || ''}` : 'Path kept');
+    const ch = $('#chooser'); if (ch?.onPick) ch.onPick();
+  });
+
   /* ───────── Today dashboard ───────── */
   const dash = $('#dash');
   if (S.prefs.track) root.classList.add('setup');
+  const chooserSaved = dash ? dash.innerHTML : '';
   if (dash) (async () => {
     await getPath();
     const render = () => {
-      if (!S.prefs.track) {
-        const hrs = JSON.parse(dash.dataset.hours || '{}');
-        dash.innerHTML = `<section class="dcard-main onboard"><p class="kicker">Set up · 10 seconds</p><h2>How do you want to work through the map?</h2>
-<div class="tswitch big">${Object.entries(PATH.tracks).map(([k, t]) => `<button type="button" data-pick-track="${k}"><b>${esc(t.label)}</b><span>${k === 'complete' ? 'All ' + (hrs[k]?.lessons ?? '') + ' lessons: Beginner foundations first, then a second pass at depth' : 'The ' + (hrs[k]?.lessons ?? '') + ' topics of the ISB course, session by session, then at depth'} · ~${hrs[k]?.hours ?? '?'} h of reading</span></button>`).join('')}</div>
-<p class="goal">Daily goal <select id="goalSel">${[15, 30, 45, 60, 90].map(m => `<option value="${m}"${m === 45 ? ' selected' : ''}>${m} minutes</option>`).join('')}</select> <span class="small muted">You can change both later.</span></p></section>`;
-        $$('[data-pick-track]').forEach(b => b.onclick = () => { S.prefs.track = b.dataset.pickTrack; S.prefs.goal = Number($('#goalSel').value); save(); root.classList.add('setup'); render(); paint(); });
-        return;
-      }
+      if (!S.prefs.track) { if (!$('#chooser', dash)) dash.innerHTML = chooserSaved; initChooser(render); return; }
       const it = nextItem(); const na = it ? nextAction(it) : null; const due = dueCount();
       const all = items(); const stages = PATH.tracks[track()].stages.map(st => { const its = all.filter(x => x.stage === st.key); return { label: st.label, n: its.length, d: its.filter(itemDone).length }; });
       const learnedN = Object.keys(PATH.T).filter(learned).length, masteredN = Object.keys(PATH.T).filter(mastered).length;
@@ -363,8 +382,8 @@ ${done ? `<p class="small">Done ${ago(done.ts)} — you rated it <b>${['', 'coul
 <p><a class="btn big" href="${na.url}">${esc(na.label)} →</a> <a class="linkbtn" href="/learn/">See the whole path</a></p>` : '<h2>Path complete</h2><p>Every lesson in this path is done. Keep reviewing to hold on to it.</p>'}</section>
 <section class="dcard ${due ? 'hot' : ''}"><p class="kicker">Review</p><p class="big">${due}</p><p>${due ? `topic${due === 1 ? '' : 's'} due for recall` : 'nothing due today'}</p>${due ? '<a class="btn" href="/review/">Start review →</a>' : (nextDue ? `<p class="small muted">Next due ${new Date(nextDue).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}</p>` : '<p class="small muted">Topics enter review when you finish their recall step.</p>')}</section>
 <section class="dcard"><p class="kicker">Progress</p>${stages.map(s => `<p class="small"><b>${esc(s.label)}</b> · ${s.d} of ${s.n}</p><div class="ptrack"><i style="width:${s.n ? (100 * s.d / s.n).toFixed(1) : 0}%"></i></div>`).join('')}<p class="small muted">${learnedN} lesson${learnedN === 1 ? '' : 's'} learned · ${masteredN} mastered</p><p class="small">${PATH.tracks[track()].stages.map(st => { const m = remainingMin(track(), st.key); return `${esc(st.label.split('·')[0].trim())}: ~${fmtH(m)} left (≈${Math.ceil(m / goal)} days at ${goal} min)`; }).join('<br>')}</p></section>
-<section class="dcard"><p class="kicker">This week</p><div class="week">${week.map(w => `<span title="${w.k}: ${w.m} min"><i style="height:${Math.min(100, w.m / goal * 100)}%"></i><small>${w.lab}</small></span>`).join('')}</div><p class="small">${today} of ${goal} min today · active ${activeDays} of 7 days</p><p class="small muted"><button type="button" class="linkbtn" id="changeSetup">Change path or goal</button></p></section>`;
-      $('#changeSetup').onclick = () => { delete S.prefs.track; save(); root.classList.remove('setup'); render(); };
+<section class="dcard"><p class="kicker">This week</p><div class="week">${week.map(w => `<span title="${w.k}: ${w.m} min"><i style="height:${Math.min(100, w.m / goal * 100)}%"></i><small>${w.lab}</small></span>`).join('')}</div><p class="small">${today} of ${goal} min today · active ${activeDays} of 7 days</p><p class="small muted"><button type="button" class="linkbtn" id="changeSetup">Change path or daily time</button></p></section>`;
+      $('#changeSetup').onclick = () => { dash.innerHTML = chooserSaved; initChooser(render); $('#chooser').scrollIntoView({ block: 'start' }); };
       const how = $('#howsec'); if (how && learnedN >= 3) how.open = false;
     };
     render();
@@ -374,31 +393,50 @@ ${done ? `<p class="small">Done ${ago(done.ts)} — you rated it <b>${['', 'coul
   /* ───────── Learn page ───────── */
   if (document.body.classList.contains('learnpage')) (async () => {
     await getPath();
-    const render = () => {
-      const tk = track();
-      $$('[data-set-track]').forEach(b => b.setAttribute('aria-checked', b.dataset.setTrack === tk));
+    const ch = $('#chooser'), sum = $('#pathsum');
+    const params = new URLSearchParams(location.search);
+    const showChooser = () => { ch.hidden = false; sum.hidden = true; $$('.track').forEach(t => t.hidden = true); initChooser(() => { history.replaceState(null, '', location.pathname); render(); scrollTo(0, 0); }); };
+    function render() {
+      if (!S.prefs.track || params.get('change')) { params.delete('change'); showChooser(); return; }
+      const tk = track(); ch.hidden = true; sum.hidden = false;
       $$('.track').forEach(t => t.hidden = t.dataset.track !== tk);
       const T = $(`.track[data-track="${tk}"]`);
-      const nx = nextItem(tk);
+      const nx = nextItem(tk); const all = items(tk);
       $$('.lrow', T).forEach(row => {
         const id = row.dataset.topic, stage = row.dataset.stage; const it = { id, stage, steps: stepsFor(id, stage, tk) };
         row.classList.toggle('ok', itemDone(it)); row.classList.toggle('next', !!nx && nx.id === id && nx.stage === stage);
         $$('.lsteps i', row).forEach(i => i.classList.toggle('ok', stepDone(id, i.dataset.k, stage)));
       });
-      $$('details.unit', T).forEach((d, i) => {
-        d.id = 'u' + (i + 1);
+      $$('details.unit', T).forEach(d => {
         const rows = $$('.lrow', d); const n = rows.filter(r => r.classList.contains('ok')).length;
         $('.uprog', d).textContent = `${n}/${rows.length}`; d.classList.toggle('complete', n === rows.length);
-        if (rows.some(r => r.classList.contains('next'))) d.open = true;
+        if (rows.some(r => r.classList.contains('next'))) { d.open = true; d.classList.add('cur'); } else d.classList.remove('cur');
+        const ids = rows.map(r => r.dataset.topic); const nLearned = ids.filter(learned).length;
+        const pr = $('[data-practise]', d); if (pr) { pr.hidden = !nLearned; pr.textContent = `Practise this unit (${nLearned} learned)`; }
+        const sk = $('[data-skip-unit]', d); if (sk) sk.hidden = n === rows.length;
       });
-      const na = nx ? nextAction(nx) : null;
-      $('#pathNow').innerHTML = na ? `<div class="nowbar"><span><small>Next</small><b>${esc(PATH.T[nx.id][0])}</b> · ${esc(na.label)}</span><a class="btn" href="${na.url}">Go →</a><a class="linkbtn" href="#" id="jumpNext">Show in path</a></div>` : '<p>Path complete.</p>';
-      $('#jumpNext')?.addEventListener('click', e => { e.preventDefault(); $('.lrow.next')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
-    };
-    $$('[data-set-track]').forEach(b => b.onclick = () => { S.prefs.track = b.dataset.setTrack; save(); render(); });
+      const goal = S.prefs.goal || 45; const na = nx ? nextAction(nx) : null;
+      const stages = PATH.tracks[tk].stages.map(st => { const its = all.filter(x => x.stage === st.key); const d = its.filter(itemDone).length; const m = remainingMin(tk, st.key); return { label: st.label, n: its.length, d, m }; });
+      const learnedN = Object.keys(PATH.T).filter(learned).length, masteredN = Object.keys(PATH.T).filter(mastered).length;
+      sum.innerHTML = `<div class="psh"><div><p class="kicker">Your path</p><h2>${esc(PATH.tracks[tk].label)}</h2><p class="small muted">${learnedN} lesson${learnedN === 1 ? '' : 's'} learned · ${masteredN} mastered · ${goal} min a day · <a href="?change=1" id="changePath">Change path or daily time</a></p></div>
+${na ? `<div class="psnext"><p class="kicker">Next</p><p><b>${esc(PATH.T[nx.id][0])}</b><br><span class="small muted">${esc(nx.stageLabel)} · Unit ${nx.unit}: ${esc(nx.unitTitle)} · lesson ${nx.pos} of ${nx.of}</span></p><p><a class="btn big" href="${na.url}">${esc(na.label)} →</a> <a class="linkbtn" href="#${tk}-u${nx.unit}" id="showNext">Show in the list</a></p></div>` : '<div class="psnext"><h3>Path complete</h3><p>Keep up your reviews to hold on to it.</p></div>'}</div>
+<div class="psbars">${stages.map(s => `<div><p class="small"><b>${esc(s.label)}</b> <span class="muted">· ${s.d} of ${s.n} lessons · ~${fmtH(s.m)} left (≈${Math.ceil(s.m / goal)} days)</span></p><div class="ptrack"><i style="width:${s.n ? (100 * s.d / s.n).toFixed(1) : 0}%"></i></div></div>`).join('')}</div>`;
+      $('#changePath').onclick = e => { e.preventDefault(); showChooser(); ch.scrollIntoView({ block: 'start' }); };
+      $('#showNext')?.addEventListener('click', e => { e.preventDefault(); const r = $('.lrow.next', T); r?.closest('details').setAttribute('open', ''); r?.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+    }
+    document.addEventListener('click', e => {
+      const sk = e.target.closest('[data-skip-unit]'); if (!sk) return;
+      const d = sk.closest('details.unit'); const ids = $$('.lrow', d).map(r => r.dataset.topic).filter(id => !learned(id));
+      if (!ids.length) return;
+      if (!confirm(`Mark ${ids.length} lesson${ids.length === 1 ? '' : 's'} in this unit as already known? They will come up in Review over the next week so you can check.`)) return;
+      ids.forEach((id, i) => { S.known[id] = Date.now(); if (!S.cards['t:' + id]) S.cards['t:' + id] = { iv: 2, reps: 0, lapses: 0, last: 0, ts: Date.now(), due: startOfDay() + (2 + (i % 6)) * DAY }; });
+      save(); paint(); render(); toast('Marked as known. Checks are scheduled in Review.');
+    });
     render();
-    const h = location.hash; if (h && /^#u\d+$/.test(h)) { const el = document.getElementById(h.slice(1)); if (el) { el.open = true; el.scrollIntoView({ block: 'start' }); } }
-    else setTimeout(() => $('.lrow.next')?.scrollIntoView({ block: 'center' }), 50);
+    // deep links: #complete-u3, #course-u5, #s5 (session)
+    const h = location.hash.slice(1);
+    const target = /^s\d+$/.test(h) ? $(`.track:not([hidden]) details.unit[data-session="${h.slice(1)}"]`) : (h ? document.getElementById(h) : null);
+    if (target && target.matches('details.unit')) { target.open = true; setTimeout(() => target.scrollIntoView({ block: 'start' }), 30); }
   })();
 
   /* ───────── Review ───────── */
@@ -411,7 +449,15 @@ ${done ? `<p class="small">Done ${ago(done.ts)} — you rated it <b>${['', 'coul
     save();
     const edge = Object.fromEntries(C.e.map(([a, b, t, why]) => [`e:${a}>${b}`, { a, b, t, why }]));
     const end = startOfDay() + DAY;
-    const due = Object.entries(S.cards).filter(([cid, c]) => c.due < end && (cid.startsWith('t:') ? C.t[cid.slice(2)] : edge[cid]));
+    const unitKey = new URLSearchParams(location.search).get('unit');
+    let due;
+    if (unitKey) {
+      const [tk, n] = unitKey.split(':'); const unitItems = items(tk).filter(it => it.unit === Number(n)); const title = unitItems[0]?.unitTitle || '';
+      const ids = [...new Set(unitItems.map(it => it.id))].filter(id => learned(id) && C.t[id]);
+      ids.forEach(id => { if (!S.cards['t:' + id]) S.cards['t:' + id] = { iv: 1, reps: 0, lapses: 0, last: 0, ts: Date.now(), due: startOfDay() }; });
+      due = ids.map(id => ['t:' + id, S.cards['t:' + id]]);
+      const h = document.createElement('p'); h.className = 'callout'; h.innerHTML = `<b>Practising Unit ${esc(n)}: ${esc(title)}</b> · ${ids.length} learned topic${ids.length === 1 ? '' : 's'}. Ratings here update their review schedule. <a href="/review/">Back to today's review</a>`; rv.before(h);
+    } else due = Object.entries(S.cards).filter(([cid, c]) => c.due < end && (cid.startsWith('t:') ? C.t[cid.slice(2)] : edge[cid]));
     // interleave across modules: round-robin by module, most overdue first within each
     const mod = cid => cid.startsWith('t:') ? C.t[cid.slice(2)][5] : C.t[edge[cid].b]?.[5] || 'x';
     const groups = {}; due.sort((a, b) => a[1].due - b[1].due).forEach(([cid]) => (groups[mod(cid)] = groups[mod(cid)] || []).push(cid));

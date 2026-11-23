@@ -92,3 +92,24 @@ Every step page shows the lesson's steps and the next action (path bar and side 
 - Reading pages are byte-for-byte the source bodies with scoped CSS. All interactive changes are added in the browser, and `verify` compares every page's text with the source.
 - Without JavaScript, every page still shows the complete content.
 - Progress lives in one versioned `localStorage` key. v1's "understood" marks carry over as "known".
+
+
+## 6. Version 3: critical review and fixes
+
+A review taking six perspectives (product, student, QA, UI/UX, design lead, teacher) found these problems in v2. Each was fixed.
+
+| Problem | Seen as | Fix |
+|---|---|---|
+| The Learn page scrolled itself past the path choice on load (229 px on desktop, 602 px on phone). One path was silently pre-selected, and nothing compared the two. | Student, UX | **Choosing comes first.** Until you pick, Learn shows only a chooser: who each path is for, what each pass contains, lessons, units and hours, and how long each part takes at your daily time. The same chooser appears on Today. No automatic scrolling. |
+| After choosing, the page had no summary of where you stand. | PM | A path summary shows your path, the next lesson and its button, progress and time left per part, and a link to change path. The current unit opens and is highlighted. |
+| Jargon: Exp20, Exp40, Case20, Case40, "R", stage, pass, edition. | Teacher, student | Plain names everywhere: **Explainer, Deep dive, Case, Open case, Recall**. The source codes stay as small tags. Steps read "Read the explainer", "Work the case". |
+| The header's "Beginner edition" switch competed with the path stages. | UX, design | Removed. The paths already separate Beginner from Practitioner material, and lists still show each topic's edition. |
+| The ISB course page claimed 262 and 618 topics "in Sessions 1–5 / 6–10", contradicting the session cards. The numbers came from a source tag, not the session lists. | QA, teacher | The figures are now computed from the session lists. The tag shows only as "Beyond the ISB course". |
+| No way to join the path partway, for example mid-course, or to skip material you already know. | Student | "Learn this session in your path" on each session page and "Follow the course" on the course page. "I already know this unit" marks a unit as known and schedules checks in Review over the following week. |
+| No consolidation at the end of a unit. | Teacher | "Practise this unit": retrieval practice over the unit's learned topics (cumulative review). |
+| Topic pages had two competing primary buttons (path bar and lesson panel). | Design | Only the lesson panel has the action on topic pages. The path bar keeps its button on reading pages only. |
+| On a case opened before its explainer, "next" pointed to the next lesson. | QA | "Then: …" now suggests the first unfinished step of the same lesson, whatever its position. |
+| Five navigation systems were stacked above the reading pages. | Design | Format tabs are now one row of compact pills, and breadcrumbs shrink to the parent link on phones. |
+| Hour totals differed between Today and Learn because one counted recall time and one did not. | QA | Both count three minutes per recall. |
+| The full path took 16–21 months at 45 minutes a day, and nothing said so up front. | PM, teacher | The chooser shows the first pass and the whole path separately, and says the depth pass can be treated as optional. |
+| **Stale code after a deploy.** Assets were versioned by the source content hash, so changes to the site's own code kept the same URL under a one-year immutable cache. Returning visitors could get new pages with old scripts. Pages were also served from the offline cache before the network. | QA | Assets are now versioned by a hash of the site's own code. Pages and data are fetched network-first, with the cache used only offline. Data files are cached for 5 minutes, down from an hour. |
