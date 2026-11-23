@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as cheerio from 'cheerio';
 import { loadSource } from './lib/source.mjs';
+import { buildPath, stepsFor } from './lib/path.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'dist');
@@ -47,7 +48,38 @@ for (const m of D.modules) {
   for (const id of ids) if (!$(`.tlist a[href="/t/${id}/"]`).length) fails.push(`module ${m.key} lacks ${id}`);
   bump('module pages');
 }
-// 5. internal links resolve
+// 5. the learning path: every readable topic is a lesson exactly once per stage, prerequisites first, every step page exists
+{
+  const KS = ['exp20', 'exp40', 'case20', 'case40'];
+  const written = Object.fromEntries(D.topics.map(t => [t.id, Object.fromEntries(KS.map(k => { const key = D.bundleMap[`${k}-${t.id}`]; return [k, !!(key && src.pages.has(key))]; }))]));
+  const P = buildPath(D, written);
+  const shipped = JSON.parse(read('data/path.json') || '{}');
+  for (const [tk, tr] of Object.entries(P.tracks)) {
+    const seenBefore = new Set();
+    for (const st of tr.stages) {
+      const seq = st.units.flatMap(u => u.items); const set = new Set(seq);
+      if (set.size !== seq.length) fails.push(`${tk}/${st.key}: a lesson appears twice`);
+      const pos = new Map(seq.map((id, i) => [id, i]));
+      let order = 0;
+      for (const id of seq) {
+        for (const p of P.effPre(id)) if (set.has(p) && pos.get(p) > pos.get(id) && tk === 'complete') { order++; fails.push(`${tk}/${st.key}: ${id} comes before its prerequisite ${p}`); }
+        const steps = stepsFor(id, st.key, P.T[id].level, k => written[id][k], tk);
+        if (!steps.length) fails.push(`${tk}/${st.key}: ${id} has no steps`);
+        for (const k of steps) if (k !== 'recall' && !read(`t/${id}/${k}/index.html`)) fails.push(`missing step page ${id}/${k}`);
+      }
+      seq.forEach(id => seenBefore.add(id));
+      const sh = shipped.tracks?.[tk]?.stages?.find(s => s.key === st.key);
+      if (!sh || JSON.stringify(sh.units.map(u => u.items)) !== JSON.stringify(st.units.map(u => u.items))) fails.push(`data/path.json out of date for ${tk}/${st.key}`);
+      ok[`${tk}/${st.key} lessons${tk === "complete" ? ", prerequisites first" : ", in session order"}`] = seq.length;
+    }
+  }
+  const allLessons = new Set(Object.values(P.tracks.complete.stages).flatMap(s => s.units.flatMap(u => u.items)));
+  for (const id of P.readable) if (!allLessons.has(id)) fails.push(`readable topic missing from the complete path: ${id}`);
+  const cards = JSON.parse(read('data/cards.json') || '{}');
+  for (const id of P.readable) { const c = cards.t?.[id]; if (!c || c[1] !== P.T[id].q || c[2] !== P.T[id].obj) fails.push(`review card text differs from source for ${id}`); }
+  ok['review cards, text identical to source'] = Object.keys(cards.t || {}).length;
+}
+// 6. internal links resolve
 const exists = href => {
   const p = decodeURI(href.split('#')[0].split('?')[0]); if (!p) return true;
   const f = path.join(OUT, p); return fs.existsSync(f) && (fs.statSync(f).isFile() || fs.existsSync(path.join(f, 'index.html')));

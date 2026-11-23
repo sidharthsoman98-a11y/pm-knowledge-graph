@@ -1,6 +1,6 @@
 # PM Knowledge Graph — Reader
 
-A reorganised, searchable, offline-capable reader for **The Product Management Knowledge Graph** by Chandrashekhar V (Version 20, 26 October 2026), built automatically from the original artifact's files.
+A learning platform built on **The Product Management Knowledge Graph** by Chandrashekhar V (Version 20, 26 October 2026), built automatically from the original artifact's files.
 
 Content © Chandrashekhar V, licensed **CC BY-NC-SA 4.0**. This reader is an adaptation under the same licence: non-commercial use, with credit, shared alike. It adds navigation, search and progress tracking. It does not add, remove or rewrite any content. `npm run verify` checks that claim on every build.
 
@@ -66,17 +66,31 @@ npm run serve      # http://localhost:4321
 
 ## What the reader does
 
-- **Four ways in**: the ISB course (10 sessions plus the 7 graded deliverables), 12 domains and 49 modules, guided paths (the primer, both AI threads, ten decision questions, ten AI competencies, four sequencing pathways, the author's three traits, the AI lens), and search.
-- **Learning order everywhere**: every module, session and path lists topics so prerequisites come first, with a dependency map drawn at build time.
-- **Topic pages**: the topic's question and learning objective, its edition and course coverage, every prerequisite with the typed reason for the edge, what it unlocks, which graded deliverables it feeds, and the four formats.
-- **Reading pages**: each of the 1,715 bundled pages on its own URL, rendered with its original styling, with a table of contents, reading-progress bar, adjustable text size, format tabs and previous/next navigation. Print-friendly.
-- **Unwritten formats** show the original map's editable four-part prompt, composed exactly as the source composes it.
-- **Find anything**: ⌘K / Ctrl+K quick-find over all 1,046 topics; full-text search over every page with filters for format, domain, module and edition (Pagefind, runs entirely in the browser, no server).
-- **Beginner switch**: hides the 575 Practitioner-only topics everywhere.
-- **Your progress, stored in your browser**: mark topics understood, mark readings read (automatic when you reach the end), bookmarks, private notes, recent history, progress bars on every module and session, export/import as JSON.
-- **Offline**: installable as an app; pages you open are cached; "Save for offline" on any module or session downloads all its pages.
-- **The original interactive map** is included unchanged at `/original/`.
-- **Light and dark themes**, keyboard navigation, skip link, responsive down to phone width.
+See `DESIGN.md` for the reasoning and the research behind each choice.
+
+- **Today**: your next lesson and its steps, reviews due, progress per stage with time left at your daily goal, and minutes studied this week.
+- **Learn**: one ordered path through all 472 topics that have readings, prerequisites first.
+  - *Complete mastery*: Foundations (376 Beginner lessons), then Depth (Exp40 and Case40 for each, plus the Practitioner-only topics).
+  - *ISB course order*: Sessions 1–10, then a depth pass.
+  - The next lesson is always marked.
+- **A lesson**: predict → read Exp20 one section at a time → recall from memory and self-check → work Case20, with its teaching note folded until you have answered → on the second pass, Exp40 and Case40. A path bar and side rail on every step say where you are and what comes next.
+- **Review**: spaced retrieval practice.
+  - Topic cards (the question, checked against the objective and the explainer's outline) and connection cards (why one topic builds on another, checked against the source's own reason).
+  - Mixed across modules. Mastered means recalled after at least three weeks.
+- **Browse**: the ISB course (sessions plus graded deliverables), 12 domains and 49 modules with dependency maps, the curated sequences, the about page and the original interactive graph.
+- **Search**: ⌘K / Ctrl+K quick-find over all topics, plus full-text search over every page (Pagefind, runs in the browser).
+- **Me**: lessons learned and mastered, topics you keep forgetting, bookmarks, notes, history, and export/import/reset of progress.
+- **Also**: offline reading and an installable app, light and dark themes, a Beginner-only filter, a print stylesheet, and layouts down to phone width.
+- **Content**: the 574 topics without readings stay visible as outline-only entries. Every reading page is the author's text unchanged; `npm run verify` checks this.
+
+## Updating GitHub from this folder (no git needed)
+
+Your local folder is not a git repository, because the first version was uploaded through the browser. To publish changes:
+1. Open the repository on github.com and choose **Add file → Upload files**.
+2. Drag in the changed files or folders from Finder. Folders keep their structure, and files with the same path are replaced.
+3. Commit to `main`. Vercel rebuilds and redeploys automatically.
+
+The browser upload skips files whose names start with a dot (`.gitignore`, `.github/`), so the GitHub Actions workflow is not in the repository. It is optional. To have git handle this instead, install GitHub Desktop, clone the repository, copy this folder's contents into the clone, then commit and push.
 
 ## Licence
 

@@ -75,3 +75,10 @@ Then screenshot the home page, a topic page, a reading page, a prompt page, the 
 ## Report
 
 Finish with: what was built, the verification counts, the deploy steps (Netlify Drop of `dist/`, or Git with Netlify or Vercel; note Vercel Hobby's 100 MB CLI upload cap and `INCLUDE_ORIGINAL=0`), the update routine, and anything in the source that looked inconsistent.
+
+
+---
+
+## Version 2: the learning layer
+
+A second session added the learning loop on top of the reader: a single ordered path, lessons (predict → read in sections → recall → case with the note folded → depth pass), spaced review, a dashboard and readiness cues. The reasoning, the evidence and the rules for future changes are in `DESIGN.md`. A session extending the platform should read `DESIGN.md` first, keep its integrity rules, and extend `scripts/verify.mjs` for anything new.

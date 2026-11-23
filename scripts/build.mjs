@@ -9,6 +9,7 @@ import * as cheerio from 'cheerio';
 import postcss from 'postcss';
 import { loadSource, pageHash } from './lib/source.mjs';
 import { setGraphSvg, localGraphSvg, esc } from './lib/graph.mjs';
+import { buildPath, stepsFor } from './lib/path.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = process.env.SOURCE_DIR ? path.resolve(process.env.SOURCE_DIR) : path.join(ROOT, 'source');
@@ -44,6 +45,9 @@ const pageKey = (kind, id) => { const k = D.bundleMap[`${kind}-${id}`]; return k
 const written = {}; for (const t of D.topics) written[t.id] = Object.fromEntries(KINDS.map(k => [k, pageKey(k, t.id)]));
 const writtenCount = id => KINDS.filter(k => written[id][k]).length;
 const isArt = id => T[id].depth === 'art';
+const P = buildPath(D, written);
+const isReadable = id => P.R.has(id);
+const recallKindOf = id => written[id].exp20 ? 'exp20' : (written[id].exp40 ? 'exp40' : null);
 
 function topo(ids) {
   const set = new Set(ids); const indeg = {}; const out = {};
@@ -75,7 +79,7 @@ const plural = (n, w) => `${n.toLocaleString('en-IN')} ${w}${n === 1 ? '' : 's'}
 const md = s => esc(s).replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
 // ───────────────────────── layout ─────────────────────────
-const NAV = [['/', 'Home', 'home'], ['/course/', 'ISB course', 'course'], ['/domains/', 'Domains', 'domains'], ['/paths/', 'Paths', 'paths'], ['/search/', 'Search', 'search'], ['/me/', 'My learning', 'me']];
+const NAV = [['/', 'Today', 'home'], ['/learn/', 'Learn', 'learn'], ['/review/', 'Review', 'review'], ['/browse/', 'Browse', 'browse'], ['/search/', 'Search', 'search'], ['/me/', 'Me', 'me']];
 function layout({ title, desc = '', body, crumbs = [], active = '', bodyClass = '', head = '' }) {
   const fullTitle = title ? `${title} · PM Knowledge Graph` : 'The Product Management Knowledge Graph — Reader';
   return `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -83,12 +87,12 @@ function layout({ title, desc = '', body, crumbs = [], active = '', bodyClass = 
 <meta name="theme-color" content="#F5F6F3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12171C" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/app.css?v=${src.contentHash}">
-<script>try{var p=JSON.parse(localStorage.getItem('pmkg:v1')||'{}').prefs||{};if(p.theme)document.documentElement.dataset.theme=p.theme;if(p.edition==='beginner')document.documentElement.classList.add('ed-b');if(p.rz)document.documentElement.style.setProperty('--rz',p.rz);}catch(e){}</script>
+<script>try{var p=JSON.parse(localStorage.getItem('pmkg:v1')||'{}').prefs||{};if(p.theme)document.documentElement.dataset.theme=p.theme;if(p.edition==='beginner')document.documentElement.classList.add('ed-b');if(p.track)document.documentElement.classList.add('setup');if(p.rz)document.documentElement.style.setProperty('--rz',p.rz);}catch(e){}</script>
 ${head}</head><body class="${bodyClass}">
 <a class="skip" href="#main">Skip to content</a>
 <header class="top"><div class="bar">
 <a class="brand" href="/"><span class="logo" aria-hidden="true"></span><span><b>PM Knowledge Graph</b><small>Reader · v${src.version.number ?? '?'}</small></span></a>
-<nav class="nav" aria-label="Primary">${NAV.map(([h, l, k]) => `<a href="${h}"${active === k ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+<nav class="nav" aria-label="Primary">${NAV.map(([h, l, k]) => `<a href="${h}"${active === k || (k === 'browse' && ['course', 'domains', 'paths'].includes(active)) ? ' aria-current="page"' : ''}>${l}${k === 'review' ? '<span class="due" id="dueBadge" hidden></span>' : ''}</a>`).join('')}</nav>
 <div class="tools">
 <button class="kbtn" id="openPalette" type="button" aria-label="Quick find (Ctrl or Cmd + K)"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg><span>Find a topic</span><kbd>⌘K</kbd></button>
 <button class="ibtn" id="edToggle" type="button" title="Switch between all topics and the Beginner edition"><span class="ed-all">All<span class="hs"> 1,046</span></span><span class="ed-beg">Beginner</span></button>
@@ -109,13 +113,14 @@ ${crumbs.length ? `<nav class="crumbs" aria-label="Breadcrumb"><ol>${crumbs.map(
 // ───────────────────────── shared components ─────────────────────────
 function fmtChips(id) {
   if (isArt(id)) return '<span class="fchips"><span class="fc art">Deliverable</span></span>';
+  if (!isReadable(id)) return '<span class="fchips"><span class="fc ol" title="The source has no reading for this topic yet">Outline only</span></span>';
   return `<span class="fchips">${KINDS.map(k => written[id][k]
     ? `<a class="fc w ${k}" href="${U.read(id, k)}" data-read-key="${k}:${id}" title="${esc(ACT[k].name)}">${ACT[k].label}</a>`
     : `<span class="fc" title="${esc(ACT[k].label)} not written yet in the source">${ACT[k].label}</span>`).join('')}</span>`;
 }
 function topicItem(id, { showModule = false, num = null, note = '' } = {}) {
   const t = T[id]; const m = MOD[t.module];
-  return `<li class="ti" data-topic="${esc(id)}" data-level="${t.level}" style="--h:${HUE[t.module]}">
+  return `<li class="ti${isReadable(id) ? '' : ' outline'}" data-topic="${esc(id)}" data-level="${t.level}" style="--h:${HUE[t.module]}">
 <span class="tstat" aria-hidden="true"></span>${num !== null ? `<span class="tnum">${num}</span>` : ''}
 <div class="tmain"><a class="tt" href="${U.topic(id)}">${esc(t.title)}</a>
 <span class="tq">${esc(t.q)}</span>${note ? `<span class="tnote">${note}</span>` : ''}
@@ -123,7 +128,7 @@ function topicItem(id, { showModule = false, num = null, note = '' } = {}) {
 ${fmtChips(id)}</li>`;
 }
 const topicList = (ids, opts = {}) => `<ol class="tlist">${ids.map((id, i) => topicItem(id, { ...opts, num: opts.numbered ? i + 1 : null })).join('')}</ol>`;
-const progressBar = (ids, label = 'understood') => `<div class="prog" data-topics="${ids.join(' ')}" data-label="${label}"><div class="ptrack"><i></i></div><span class="ptxt">0 of ${ids.length} ${label}</span></div>`;
+const progressBar = (ids0, label = 'learned') => { const ids = ids0.filter(isReadable); return ids.length ? `<div class="prog" data-topics="${ids.join(' ')}" data-label="${label}"><div class="ptrack"><i></i></div><span class="ptxt">0 of ${ids.length} lessons ${label}</span></div>` : ''; };
 const offlineBtn = (ids) => {
   const urls = ids.flatMap(id => [U.topic(id), ...KINDS.filter(k => written[id][k]).map(k => U.read(id, k))]);
   return `<button class="btn ghost offline" type="button" data-urls="${urls.join(' ')}">Save ${urls.length} pages for offline</button>`;
@@ -199,11 +204,13 @@ for (const t of D.topics) {
 ${formatTabs(id, k)}</div>
 ${pfFilters(id, a.label)}
 <div class="rlayout"><aside class="toc" aria-label="On this page"><p>On this page</p><ol>${r.toc.map(([h, tx]) => `<li><a href="#${h}">${esc(tx)}</a></li>`).join('')}</ol>
-<div class="rtools"><button class="btn mark" type="button" data-mark="${k}:${id}">Mark as read</button><div class="rz"><button type="button" data-rz="-1" aria-label="Smaller text">A−</button><button type="button" data-rz="0" aria-label="Reset text size">A</button><button type="button" data-rz="1" aria-label="Larger text">A+</button></div></div></aside>
-<article class="rd" data-pagefind-body data-reading="${k}:${id}">${r.body}</article></div>
+<div class="rtools"><button class="btn mark" type="button" data-mark="${k}:${id}">Mark as read</button><button class="btn ghost" type="button" id="modeToggle" hidden>Show whole page</button><div class="rz"><button type="button" data-rz="-1" aria-label="Smaller text">A−</button><button type="button" data-rz="0" aria-label="Reset text size">A</button><button type="button" data-rz="1" aria-label="Larger text">A+</button></div></div></aside>
+<div class="rcol"><div id="predict"></div><article class="rd" data-pagefind-body data-reading="${k}:${id}" data-kind="${k}" data-topic-id="${esc(id)}">${r.body}</article><div id="secnav"></div><div id="recall"></div></div>
+<aside class="rail" id="rail" data-id="${esc(id)}" data-kind="${k}" aria-label="Lesson"></aside></div>
 <div class="rfoot"><button class="btn mark big" type="button" data-mark="${k}:${id}">Mark as read</button><a class="btn ghost" href="${U.topic(id)}">Back to topic overview</a></div>
 ${navBottom}<div class="rprog" aria-hidden="true"><i></i></div>`;
-      write(`t/${id}/${k}/index.html`, layout({ title: `${t.title} — ${a.label}`, desc: t.q, crumbs: crumbsFor(id, a.label), body, bodyClass: 'reading', head: `<style>${r.css}</style>` }));
+      const rctx = { id, title: t.title, q: t.q, obj: t.obj, kind: k, level: t.level, has: KINDS.map(x => written[id][x] ? 1 : 0).join(''), toc: r.toc.map(x => x[1]), recall: k === recallKindOf(id) };
+      write(`t/${id}/${k}/index.html`, layout({ title: `${t.title} — ${a.label}`, desc: t.q, crumbs: crumbsFor(id, a.label), body: body + `<script type="application/json" id="rctx">${JSON.stringify(rctx).replace(/</g, '\\u003c')}</script>`, bodyClass: `reading k-${k}`, head: `<style>${r.css}</style>` }));
     } else if (!isArt(id)) {
       // Not written in the source: offer the original's editable prompt, exactly as the source composes it.
       const m = MOD[t.module], d = DOM[m.domain];
@@ -222,6 +229,24 @@ ${navBottom}<div class="rprog" aria-hidden="true"><i></i></div>`;
 }
 
 // ───────────────────────── topic hubs ─────────────────────────
+const recallKind = id => written[id].exp20 ? 'exp20' : (written[id].exp40 ? 'exp40' : null);
+function lessonPanel(id) {
+  const t = T[id]; const has = k => !!written[id][k];
+  const f = stepsFor(id, 'found', t.level, has), d = stepsFor(id, 'depth', 1, has);
+  const label = k => k === 'recall' ? 'Recall it from memory' : (ACT[k].kind === 'case' ? `Work ${ACT[k].label}` : `Read ${ACT[k].label}`);
+  const href = k => k === 'recall' ? `${U.read(id, recallKind(id))}#recall` : U.read(id, k);
+  const sub = k => k === 'recall' ? 'A short self-test at the end of the explainer' : `${mins(readingMeta[`${k}:${id}`].words)} min · ${esc(ACT[k].name.split('·')[1]?.trim() || '')}`;
+  const li = (k, n) => `<li data-step="${k}"><a href="${href(k)}"><span class="sn">${n}</span><span><b>${label(k)}</b><small>${sub(k)}</small></span></a></li>`;
+  let n = 0;
+  return `<section class="lesson" id="lesson" data-id="${esc(id)}" data-level="${t.level}" data-has="${KINDS.map(k => has(k) ? 1 : 0).join('')}" aria-label="Lesson steps">
+<p class="lctx" id="lctx">Lesson</p>
+<h2>How to learn this topic</h2>
+${f.length ? `<p class="stg">Foundations</p><ol class="steps">${f.map(k => li(k, ++n)).join('')}</ol>` : ''}
+${d.length ? `<p class="stg">Depth <small>— on your second pass</small></p><ol class="steps">${d.map(k => li(k, ++n)).join('')}</ol>` : ''}
+<div class="lcta" id="lcta"></div>
+<p class="lknown"><button type="button" class="linkbtn" data-known="${esc(id)}">I already know this — skip to a check later</button></p>
+</section>`;
+}
 for (const t of D.topics) {
   const id = t.id, m = MOD[t.module], d = DOM[m.domain];
   const rels = t.rel.map(r => ({ id: r.p, title: T[r.p].title, href: U.topic(r.p), level: T[r.p].level, rel: `${D.rel_names[r.t]}: ${r.why}` }));
@@ -229,28 +254,34 @@ for (const t of D.topics) {
   const feeds = feedsDeliverables(id);
   const bt = bTopic[id]; const bDiff = bt && JSON.stringify(bt.prereqs) !== JSON.stringify(t.prereqs);
   const { prev, next } = neighbours(id);
-  const formats = isArt(id) ? '' : `<section class="sec"><h2>Read or practise</h2><div class="fgrid">${KINDS.map(k => {
+  const readable = isReadable(id);
+  const formats = !readable ? '' : `<section class="sec"><h2>All formats for this topic</h2><div class="fgrid">${KINDS.map(k => {
     const a = ACT[k]; const w = written[id][k]; const rm = w ? readingMeta[`${k}:${id}`] : null;
-    return `<a class="fcard ${k}${w ? ' w' : ' nw'}" href="${U.read(id, k)}" data-read-key="${k}:${id}"><span class="flbl">${a.label}</span><b>${esc(a.name)}</b><span class="fshort">${esc(a.short)}</span><span class="fmeta">${w ? `${mins(rm.words)} min · ${rm.words.toLocaleString('en-IN')} words${rm.title && rm.title !== t.title ? ` · “${esc(rm.title)}”` : ''}` : 'Not written yet — get the prompt'}</span></a>`;
+    return `<a class="fcard ${k}${w ? ' w' : ' nw'}" href="${U.read(id, k)}" data-read-key="${k}:${id}"><span class="flbl">${a.label}</span><b>${esc(a.name)}</b><span class="fshort">${esc(a.short)}</span><span class="fmeta">${w ? `${mins(rm.words)} min · ${rm.words.toLocaleString('en-IN')} words${rm.title && rm.title !== t.title ? ` · “${esc(rm.title)}”` : ''}` : 'Not written in the source — prompt only'}</span></a>`;
   }).join('')}</div></section>`;
-  const relList = rels.length ? `<ul class="rlist">${t.rel.map(r => `<li data-topic="${esc(r.p)}" data-level="${T[r.p].level}"><span class="rtype t${r.t}">${esc(D.rel_names[r.t])}</span><a href="${U.topic(r.p)}">${esc(T[r.p].title)}</a><span class="why">${esc(r.why)}</span></li>`).join('')}</ul>` : '<p class="muted">A starting point: this topic has no prerequisites.</p>';
-  const body = `<article class="topic" style="--h:${HUE[t.module]}"><header class="thead" data-pagefind-body>
+  const outline = readable || isArt(id) ? '' : `<section class="callout outline"><b>Outline only.</b> The source map has no reading for this topic yet, so it is not a lesson in your path. Its question and learning objective above are everything the source says about it. The original map offers prompts that would write the readings: <a href="${U.read(id, 'exp20')}">Exp20</a> · <a href="${U.read(id, 'exp40')}">Exp40</a> · <a href="${U.read(id, 'case20')}">Case20</a> · <a href="${U.read(id, 'case40')}">Case40</a>.</section>`;
+  const relList = rels.length ? `<ul class="rlist ready">${t.rel.map(r => `<li data-topic="${esc(r.p)}" data-level="${T[r.p].level}"><span class="tstat" aria-hidden="true"></span><div><span class="rtype t${r.t}">${esc(D.rel_names[r.t])}</span> <a href="${U.topic(r.p)}">${esc(T[r.p].title)}</a><span class="why">${esc(r.why)}</span>${isReadable(r.p) ? '' : `<span class="olobj"><b>Outline only:</b> ${esc(T[r.p].obj)}</span>`}</div></li>`).join('')}</ul>` : '<p class="muted">A starting point: this topic has no prerequisites.</p>';
+  const body = `<article class="topic" style="--h:${HUE[t.module]}"><div class="tgrid"><div class="tcol">
+<header class="thead" data-pagefind-body>
 <p class="kicker"><a href="${U.mod(m.key)}">${esc(m.name)}</a></p>
 <h1 data-pagefind-meta="title" data-pagefind-weight="8">${esc(t.title)}</h1>
 <p class="tqbig">${esc(t.q)}</p>
 <p class="obj"><span>Learning objective</span>${esc(t.obj)}</p>
-<ul class="badges"><li class="lvl l${t.level}">${levelLabel(t.level)} edition${t.level === 2 ? ' only' : ''}</li>${t.sessions.length ? `<li>ISB course: ${t.sessions.map(s => `<a href="${U.session(s)}">S${s}</a>`).join(', ')}</li>` : ''}${depthName[t.depth] ? `<li>${esc(depthName[t.depth])}</li>` : ''}<li>${esc(ownerName[t.owner])}</li><li class="ai ai-${m.ai_level}">AI impact on this module: ${esc(m.ai_level)}</li></ul>
 </header>${pfFilters(id, 'Topic overview')}
-<div class="tactions"><button class="btn" type="button" data-done="${esc(id)}">Mark as understood</button><button class="btn ghost" type="button" data-bookmark="${esc(id)}">Bookmark</button></div>
+${outline}
+${readable ? `<div class="lesson-m">${lessonPanel(id)}</div>` : ''}
+<section class="sec"><h2>Before you start</h2><p class="muted small" id="readyNote">What this topic builds on, and why.</p>${relList}${bDiff ? `<p class="muted small">In the Beginner edition the prerequisites are: ${bt.prereqs.length ? bt.prereqs.map(p => `<a href="${U.topic(p)}">${esc(T[p].title)}</a>`).join(', ') : 'none (a starting point)'}.</p>` : ''}</section>
 ${formats}
 ${isArt(id) ? `<section class="sec"><h2>What this deliverable encompasses</h2><p class="muted">Each of these topics is practised implicitly inside the deliverable.</p>${topicList(t.prereqs, { showModule: true })}</section>` : ''}
-<section class="sec"><h2>Where it sits</h2><div class="lwrap">${localGraphSvg({ title: t.title }, rels, after)}</div></section>
-<div class="two"><section class="sec"><h2>Builds on</h2>${relList}${bDiff ? `<p class="muted small">In the Beginner edition the prerequisites are: ${bt.prereqs.length ? bt.prereqs.map(p => `<a href="${U.topic(p)}">${esc(T[p].title)}</a>`).join(', ') : 'none (a starting point)'}.</p>` : ''}</section>
-<section class="sec"><h2>Unlocks</h2>${after.length ? `<ul class="rlist">${after.map(a => `<li data-topic="${esc(a.id)}" data-level="${a.level}"><a href="${a.href}">${esc(a.title)}</a><span class="why">${esc(MOD[T[a.id].module].name)}</span></li>`).join('')}</ul>` : '<p class="muted">Nothing in the map depends on this topic yet.</p>'}
-${feeds.length ? `<h3>Feeds the graded deliverables</h3><ul class="rlist">${feeds.map(f => `<li><a href="${U.topic(f)}">${esc(T[f].title)}</a></li>`).join('')}</ul>` : ''}</section></div>
-<section class="sec notes"><h2>Your notes</h2><textarea data-note="${esc(id)}" rows="4" placeholder="Private to this browser. Saved as you type."></textarea></section>
+<details class="sec more" open><summary><h2>Where it sits in the map</h2></summary><div class="lwrap">${localGraphSvg({ title: t.title }, rels, after)}</div>
+<h3>Unlocks</h3>${after.length ? `<ul class="rlist">${after.map(a => `<li data-topic="${esc(a.id)}" data-level="${a.level}"><a href="${a.href}">${esc(a.title)}</a><span class="why">${esc(MOD[T[a.id].module].name)}</span></li>`).join('')}</ul>` : '<p class="muted">Nothing in the map depends on this topic yet.</p>'}
+${feeds.length ? `<h3>Feeds the graded deliverables</h3><ul class="rlist">${feeds.map(f => `<li><a href="${U.topic(f)}">${esc(T[f].title)}</a></li>`).join('')}</ul>` : ''}</details>
+<details class="sec more"><summary><h2>Course and edition details</h2></summary><ul class="badges"><li class="lvl l${t.level}">${levelLabel(t.level)} edition${t.level === 2 ? ' only' : ''}</li>${t.sessions.length ? `<li>ISB course: ${t.sessions.map(s => `<a href="${U.session(s)}">S${s}</a>`).join(', ')}</li>` : ''}${depthName[t.depth] ? `<li>${esc(depthName[t.depth])}</li>` : ''}<li>${esc(ownerName[t.owner])}</li><li class="ai ai-${m.ai_level}">AI impact on this module: ${esc(m.ai_level)}</li></ul><p class="small muted">${esc(m.ai_note)}</p></details>
 <nav class="pn">${prev ? `<a class="pv" href="${U.topic(prev)}"><small>Previous in module</small>${esc(T[prev].title)}</a>` : '<span></span>'}${next ? `<a class="nx" href="${U.topic(next)}"><small>Next in module</small>${esc(T[next].title)}</a>` : '<span></span>'}</nav>
-</article>`;
+</div>
+<aside class="tside">${readable ? `<div class="lesson-d"></div>` : ''}
+<section class="box notes"><h3>Your notes</h3><textarea data-note="${esc(id)}" rows="6" placeholder="Private to this browser. Saved as you type."></textarea></section>
+<p><button class="btn ghost" type="button" data-bookmark="${esc(id)}">Bookmark</button></p></aside></div></article>`;
   write(`t/${id}/index.html`, layout({ title: t.title, desc: t.q, crumbs: crumbsFor(id), body, bodyClass: 'topicpage' }));
 }
 
@@ -259,8 +290,9 @@ for (const m of D.modules) {
   const ids = modTopics[m.key] || []; const d = DOM[m.domain];
   const nW = ids.filter(id => writtenCount(id)).length;
   const body = `<div class="page" style="--h:${HUE[m.key]}"><header class="phead"><p class="kicker"><a href="${U.dom(d.key)}">${esc(d.name)}</a></p><h1>${esc(m.name)}</h1><p class="lede">${esc(m.desc)}</p>
-<p class="stats"><span><b>${ids.length}</b> topics</span><span><b>${ids.filter(i => T[i].level === 1).length}</b> in Beginner</span><span><b>${nW}</b> with readings</span></p>${progressBar(ids)}</header>
-<div class="mgrid"><div><section class="sec"><h2>Topics in learning order</h2><p class="muted small">Ordered so every prerequisite inside this module comes before the topics that need it.</p>${topicList(ids, { numbered: true })}</section>
+<p class="stats"><span><b>${nW}</b> lessons</span><span><b>${ids.length - nW}</b> outline-only</span><span><b>${ids.filter(i => T[i].level === 1).length}</b> in Beginner</span><span><b>~${Math.round(ids.filter(isReadable).reduce((a, i) => a + KINDS.reduce((b, k) => b + (written[i][k] ? readingMeta[`${k}:${i}`].words : 0), 0), 0) / 220 / 60)} h</b> of reading</span></p>${progressBar(ids)}</header>
+<div class="mgrid"><div><section class="sec"><h2>${ids.filter(isReadable).length} lessons in learning order</h2><p class="muted small">Every prerequisite inside this module comes before the topics that need it.</p>${ids.filter(isReadable).length ? topicList(ids.filter(isReadable), { numbered: true }) : '<p class="muted">No topic in this module has a reading in the source yet.</p>'}</section>
+${ids.filter(i => !isReadable(i)).length ? `<details class="sec more"><summary><h2>${ids.filter(i => !isReadable(i)).length} outline-only topics</h2></summary><p class="muted small">The source has no reading for these yet. Each shows its question and links to its objective and connections.</p>${topicList(ids.filter(i => !isReadable(i)))}</details>` : ''}
 <section class="sec"><h2>Dependency map</h2>${graphFor(ids, `Dependency map of ${m.name}`)}</section></div>
 <aside class="side">
 <div class="box"><h3>AI impact: ${esc(m.ai_level)}</h3><p>${esc(m.ai_note)}</p><p class="muted small">${esc(D.ai_lens.levels[m.ai_level] || '')}</p></div>
@@ -324,24 +356,66 @@ addPath('ai-lens', D.ai_lens.name + ': how much has AI changed each module', 'AI
   write('paths/index.html', layout({ title: 'Paths', crumbs: [[null, 'Paths']], active: 'paths', body }));
 }
 
-// ───────────────────────── home ─────────────────────────
+// ───────────────────────── learning path, review, browse, home ─────────────────────────
+const tMin = (id, steps) => steps.filter(k => k !== 'recall').reduce((a, k) => a + readingMeta[`${k}:${id}`].words / 220, 0);
+const trackStats = {};
+{
+  const trackHtml = Object.entries(P.tracks).map(([tk, tr]) => {
+    let uNo = 0; let total = 0;
+    const stages = tr.stages.map(st => {
+      let stMin = 0;
+      const units = st.units.map(u => {
+        uNo++;
+        const has = id => k => !!written[id][k];
+        const rows = u.items.map(id => { const steps = stepsFor(id, st.key, T[id].level, has(id), tk); const mn = tMin(id, steps); stMin += mn; return `<li class="lrow" data-topic="${esc(id)}" data-level="${T[id].level}" data-stage="${st.key}"><span class="tstat" aria-hidden="true"></span><a href="${U.topic(id)}">${esc(T[id].title)}</a>${T[id].module !== u.module && u.module ? `<span class="lmod">${esc(MOD[T[id].module].name)}</span>` : ''}<span class="lsteps">${steps.map(k => `<i data-k="${k}" title="${k === 'recall' ? 'Recall' : ACT[k].label}">${k === 'recall' ? 'R' : ACT[k].label}</i>`).join('')}</span><span class="lmin">${Math.round(mn)} min</span></li>`; }).join('');
+        const uMin = u.items.reduce((a, id) => a + tMin(id, stepsFor(id, st.key, T[id].level, has(id), tk)), 0);
+        return `<details class="unit" data-unit="${tk}:${st.key}:${uNo}"><summary><span class="un">Unit ${uNo}</span><b>${esc(u.title)}</b><span class="umeta">${u.items.length} lessons · ~${(uMin / 60).toFixed(1)} h</span><span class="uprog" data-topics="${u.items.join(' ')}" data-stage="${st.key}"></span></summary><ol>${rows}</ol></details>`;
+      }).join('');
+      total += stMin;
+      return `<section class="stage" data-stage="${st.key}"><header><h2>${esc(st.label)}</h2><p class="muted">${esc(st.desc)}</p><p class="stats"><span><b>${st.units.reduce((a, u) => a + u.items.length, 0)}</b> lessons</span><span><b>${st.units.length}</b> units</span><span><b>~${Math.round(stMin / 60)} h</b> of reading</span></p></header>${units}</section>`;
+    }).join('');
+    trackStats[tk] = { hours: Math.round(total / 60), lessons: new Set(tr.stages.flatMap(s => s.units.flatMap(u => u.items))).size };
+    return `<div class="track" data-track="${tk}">${stages}</div>`;
+  }).join('');
+  const nOutline = D.topics.length - P.readable.length - arts.length;
+  const body = `<div class="page"><header class="phead"><p class="kicker">Your learning path</p><h1>Learn</h1>
+<p class="lede">One route through everything the map can teach, ordered so every prerequisite comes first. Follow it from the top; the next lesson is always marked.</p>
+<div class="tswitch" role="radiogroup" aria-label="Path">${Object.entries(P.tracks).map(([tk, tr]) => `<button type="button" role="radio" data-set-track="${tk}"><b>${esc(tr.label)}</b><span>${esc(tr.short)} · ${trackStats[tk].lessons} lessons · ~${trackStats[tk].hours} h</span></button>`).join('')}</div>
+<div id="pathNow" class="pathnow"></div></header>
+${trackHtml}
+<section class="sec muted small"><p>${P.readable.length} of the map's ${D.topics.length.toLocaleString('en-IN')} topics have readings in the source and are lessons here. The other ${nOutline} are outline-only: they appear in their modules with their question and learning objective, and wherever a lesson depends on one, its objective is shown on that lesson. The ${arts.length} graded deliverables of the ISB course are on the <a href="/course/">course page</a>.</p></section></div>`;
+  write('learn/index.html', layout({ title: 'Learn', crumbs: [[null, 'Learn']], active: 'learn', body, bodyClass: 'learnpage' }));
+}
+write('review/index.html', layout({ title: 'Review', crumbs: [[null, 'Review']], active: 'review', bodyClass: 'reviewpage', body: `<div class="page narrow"><header class="phead"><p class="kicker">Spaced retrieval practice</p><h1>Review</h1><p class="lede">Answer from memory first, then check. Topics come back at growing intervals, mixed across modules, until you can recall them weeks later. A topic counts as mastered only when you still recall it after three weeks.</p></header><div id="review"><noscript>Review needs JavaScript.</noscript></div></div>` }));
+write('browse/index.html', layout({ title: 'Browse', crumbs: [[null, 'Browse']], active: 'browse', body: `<div class="page"><header class="phead"><p class="kicker">Explore the map</p><h1>Browse</h1><p class="lede">Every other way into the same material, for when you want to look something up rather than follow the path.</p></header><div class="entry">
+${card('/course/', 'ISB course', `${Object.keys(D.sessionTitles).length} sessions and ${arts.length} graded deliverables, each session showing only the topics it teaches.`, '<span class="go">Open →</span>', 'big e1')}
+${card('/domains/', 'Domains and modules', `${D.domains.length} domains, ${D.modules.length} modules, each with the author's narrative and a dependency map.`, '<span class="go">Open →</span>', 'big e2')}
+${card('/paths/', 'Curated sequences', 'The primer, both AI threads, ten decision questions, AI competencies, sequencing pathways, the three traits, the AI lens.', '<span class="go">Open →</span>', 'big e3')}
+${card('/about/', 'About the map', 'The original front page, teaching lenses, edge types and the 50-programme benchmark.', '<span class="go">Open →</span>', 'big')}
+${card('/original/', 'Original interactive graph', 'The force-directed map with its AI and pillar lenses, unchanged.', '<span class="go">Open ↗</span>', 'big')}
+</div></div>` }));
 {
   const nPages = Object.values(written).reduce((a, w) => a + KINDS.filter(k => w[k]).length, 0);
   const nEdges = D.topics.reduce((a, t) => a + t.prereqs.length, 0);
-  const body = `<section class="hero"><div class="hwrap"><p class="kicker">${esc(D.author_note.by)} · Version ${src.version.number ?? '?'} · updated ${esc(src.version.updated || '')}</p>
-<h1>The Product Management Knowledge Graph</h1><p class="lede">A prerequisite map of the whole discipline, reorganised for reading: find any topic in two keystrokes, follow the ISB course session by session, or work through a domain in dependency order. Every topic has up to two explainers and two Indian-context cases.</p>
-<p class="stats big"><span><b>${D.topics.length.toLocaleString('en-IN')}</b> topics</span><span><b>${D.modules.length}</b> modules</span><span><b>${nEdges.toLocaleString('en-IN')}</b> prerequisite edges</span><span><b>${nPages.toLocaleString('en-IN')}</b> reading pages</span></p>
-<button class="bigsearch" type="button" data-open-palette><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>Find a topic, question or module…<kbd>⌘K</kbd></button></div></section>
-<section class="sec cont" id="continue" hidden><h2>Pick up where you left off</h2><div class="mgrid3" id="contList"></div></section>
-<section class="sec"><h2>Choose how to learn</h2><div class="entry">
-${card('/course/', 'Follow the ISB course', `${Object.keys(D.sessionTitles).length} sessions, each showing only the topics it teaches, prerequisites first.`, '<span class="go">Open the course →</span>', 'big e1')}
-${card('/domains/', 'Learn by domain', `${D.domains.length} domains and ${D.modules.length} modules, each in learning order with a dependency map.`, '<span class="go">Browse domains →</span>', 'big e2')}
-${card('/paths/', 'Take a guided path', 'The primer, the two AI threads, ten decision questions, AI competencies and four sequencing pathways.', '<span class="go">See paths →</span>', 'big e3')}
-</div></section>
-<section class="sec"><h2>Four ways into any topic</h2><div class="fgrid">${KINDS.map(k => `<div class="fcard ${k} w static"><span class="flbl">${ACT[k].label}</span><b>${esc(ACT[k].name)}</b><span class="fshort">${esc(ACT[k].short)}</span><span class="fmeta">~${ACT[k].words.toLocaleString('en-IN')} words</span></div>`).join('')}</div></section>
-<section class="sec"><h2>Start with the primer</h2><div class="chips">${D.primer.map(id => `<a class="chip" href="${U.topic(id)}" data-topic="${id}">${esc(T[id].title)}</a>`).join('')}</div></section>
-<section class="sec"><h2>The map at a glance</h2><div class="dgrid">${D.domains.map(d => { const ids = (domMods[d.key] || []).flatMap(k => modTopics[k] || []); return `<div class="dcard" style="--h:${BASE_HUE[d.key]}"><h3><a href="${U.dom(d.key)}">${esc(d.name)}</a></h3><ul>${(domMods[d.key] || []).map(k => `<li><a href="${U.mod(k)}">${esc(MOD[k].name)}</a><span>${(modTopics[k] || []).length}</span></li>`).join('')}</ul>${progressBar(ids)}</div>`; }).join('')}</div></section>
-<section class="sec orig"><p>Prefer the original force-directed graph with its AI and pillar lenses? <a href="/original/" data-orig>Open the original interactive map</a> — it is included unchanged.</p></section>`;
+  const body = `<section class="hero slim"><div class="hwrap"><p class="kicker">${esc(D.author_note.by)} · Version ${src.version.number ?? '?'} · updated ${esc(src.version.updated || '')}</p>
+<h1>The Product Management Knowledge Graph</h1>
+<p class="stats"><span><b>${P.readable.length}</b> lessons</span><span><b>${nPages.toLocaleString('en-IN')}</b> reading pages</span><span><b>${D.topics.length.toLocaleString('en-IN')}</b> topics mapped</span><span><b>${nEdges.toLocaleString('en-IN')}</b> prerequisite links</span></p></div></section>
+<div id="dash" class="dash" data-hours='${JSON.stringify(trackStats)}'>
+<section class="dcard-main onboard"><p class="kicker">Start here</p><h2>Learn the whole discipline, one lesson at a time</h2><p>Every lesson follows the same rhythm: read the working explainer, recall it from memory, then work a decision case. Topics you learn come back for short reviews until they stick. Your progress stays in this browser.</p><p><a class="btn big" href="/learn/">Open your learning path</a></p></section>
+</div>
+<details class="sec more" id="howsec" open><summary><h2>How a lesson works</h2></summary><div class="howgrid">
+<div class="box"><span class="hn">1</span><h3>Predict</h3><p>Before reading, try to answer the topic's question. Guessing first, even wrongly, makes the reading stick.</p></div>
+<div class="box"><span class="hn">2</span><h3>Read</h3><p>The ${ACT.exp20.label} explainer, one section at a time (${ACT.exp20.short.toLowerCase()}).</p></div>
+<div class="box"><span class="hn">3</span><h3>Recall</h3><p>Close the page in your head and answer again. Then check against the page's outline and rate yourself.</p></div>
+<div class="box"><span class="hn">4</span><h3>Apply</h3><p>Work the ${ACT.case20.label} decision case: answer its questions before opening the teaching note.</p></div>
+<div class="box"><span class="hn">5</span><h3>Review</h3><p>The topic returns after 1, 3, 7, 16 days and longer. It counts as mastered once you still recall it after three weeks.</p></div>
+<div class="box"><span class="hn">6</span><h3>Go deeper</h3><p>On your second pass: ${ACT.exp40.label} (${ACT.exp40.short.toLowerCase()}) and ${ACT.case40.label}, a case with no clear answer.</p></div>
+</div></details>
+<section class="sec"><h2>Or explore</h2><div class="entry">
+${card('/course/', 'ISB course', `${Object.keys(D.sessionTitles).length} sessions, each showing only the topics it teaches.`, '<span class="go">Open →</span>', 'e1')}
+${card('/domains/', 'Domains and modules', `${D.domains.length} domains and ${D.modules.length} modules in dependency order.`, '<span class="go">Open →</span>', 'e2')}
+${card('/paths/', 'Curated sequences', 'The primer, AI threads, decision questions and more.', '<span class="go">Open →</span>', 'e3')}
+</div></section>`;
   write('index.html', layout({ title: '', body, active: 'home', bodyClass: 'home' }));
 }
 
@@ -376,6 +450,17 @@ write('404.html', layout({ title: 'Not found', body: `<div class="page narrow"><
 const searchIdx = D.topics.map(t => [t.id, t.title, t.q, MOD[t.module].name, t.level, KINDS.map(k => written[t.id][k] ? 1 : 0).join(''), t.obj]);
 write('data/search.json', JSON.stringify(searchIdx));
 write('data/actions.json', JSON.stringify(D.actions));
+{
+  // path.json: what the client needs to compute lessons, steps, minutes and the next step
+  const TT = {}; for (const id of P.readable) TT[id] = [T[id].title, T[id].module, T[id].level, ...KINDS.map(k => written[id][k] ? readingMeta[`${k}:${id}`].words : 0)];
+  const tracks = Object.fromEntries(Object.entries(P.tracks).map(([tk, tr]) => [tk, { label: tr.label, stages: tr.stages.map(st => ({ key: st.key, label: st.label, units: st.units.map(u => ({ title: u.title, module: u.module, items: u.items })) })) }]));
+  write('data/path.json', JSON.stringify({ v: src.contentHash, tracks, T: TT, M: Object.fromEntries(D.modules.map(m => [m.key, m.name])) }));
+  // cards.json: retrieval prompts built only from source text (question, objective, the explainer's own section headings, typed prerequisite reasons)
+  const cards = { t: {}, e: [], rel: D.rel_names };
+  for (const id of P.readable) { const rk = recallKindOf(id); cards.t[id] = [T[id].title, T[id].q, T[id].obj, rk ? readingMeta[`${rk}:${id}`].toc.map(x => x[1]) : [], rk, T[id].module]; }
+  for (const t of D.topics) if (isReadable(t.id)) for (const r of t.rel) if (isReadable(r.p)) cards.e.push([r.p, t.id, r.t, r.why]);
+  write('data/cards.json', JSON.stringify(cards));
+}
 write('data/graph.json', JSON.stringify({ ...D, bundleMap: undefined, bundled: undefined, packMap: undefined }));
 const version = { source: { url: SOURCE_URL, version: src.version.number, updated: src.version.updated, contentHash: src.contentHash, topics: D.topics.length, pages: Object.keys(readingMeta).length }, builtAt };
 write('version.json', JSON.stringify(version, null, 2));
@@ -388,7 +473,7 @@ if (INCLUDE_ORIGINAL) {
   for (const d of ['b', 'img', 'vendor']) if (fs.existsSync(path.join(SRC, d))) copyDir(path.join(SRC, d), `original/${d}`);
 }
 // precache list for the service worker
-write('precache.json', JSON.stringify(['/', '/course/', '/domains/', '/paths/', '/me/', '/search/', '/about/', '/data/search.json', '/data/actions.json', `/assets/app.css?v=${src.contentHash}`, `/assets/app.js?v=${src.contentHash}`, '/assets/icon.svg']));
+write('precache.json', JSON.stringify(['/', '/learn/', '/review/', '/browse/', '/course/', '/domains/', '/paths/', '/me/', '/search/', '/about/', '/data/search.json', '/data/actions.json', '/data/path.json', '/data/cards.json', `/assets/app.css?v=${src.contentHash}`, `/assets/app.js?v=${src.contentHash}`, '/assets/icon.svg']));
 const sw = fs.readFileSync(path.join(ROOT, 'site/sw.js'), 'utf8').replace('__VERSION__', src.contentHash + '-' + builtAt.slice(0, 19));
 write('sw.js', sw);
 
